@@ -1,0 +1,125 @@
+.tileBlock {
+    width: 90%;
+    height: auto;
+    max-width: 505px;
+    margin-top: 15px;
+    padding: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: background-color $transition1;
+    box-shadow: 4px 4px 8px 0 rgba(11, 52, 102, 0.12);
+    border-radius: 10px;
+
+    .tileHeadline {
+        width: 100%;
+        display: flex;
+        padding-bottom: 20px;
+        margin: 0;
+        text-align: center;
+        font-weight: 400;
+        align-items: center;
+        justify-content: center;
+        font-family: $firaSans;
+
+        &.withBtn {
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            padding-right: 40px;
+            grid-template-rows: 100%;
+            align-items: center;
+        }
+
+        @media (max-width: $mobile) {
+            font-size: 22px;
+
+            &.withBtn {
+                grid-template-columns: 30px 1fr;
+                padding-right: 30px;
+
+                .returnBtn i {
+                    width: 30px;
+                    height: 30px;
+                    line-height: 30px;
+                    font-size: 16px;
+                }
+            }
+        }
+
+        i {
+            display: block;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            font-size: 11px;
+            line-height: 26px;
+            background: transparentize($color: $gray, $amount: 0.7);
+            opacity: .9;
+            margin-left: 10px;
+            transform: translateY(1px);
+            transition: background-color $transition1;
+            cursor: pointer;
+
+            &:hover {
+                background: transparentize($color: $gray, $amount: 0.5);
+            }
+        }
+
+        .returnBtn {
+            display: block;
+            text-decoration: none;
+
+            i {
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                font-size: 20px;
+                margin-left: 0;
+                transition: color $transition1;
+            }
+        }
+    }
+
+    .tileText {
+        margin: 5px 0;
+        font-size: 16px;
+        text-align: center;
+    }
+
+    .tileTextBg {
+        margin: 5px 0;
+        font-size: 16px;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid;
+    }
+
+    .centerBlock {
+        width: 100%;
+        height: 100%;
+        padding-bottom: 25px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        overflow: hidden;
+    }
+}
+
+body.inkline.-light .defaultLayout {
+    .tileBlock,.loadingBlock {
+        background: $white;
+    }
+    .tileBlock .tileHeadline .returnBtn i {
+        color: $black;
+    }
+}
+  
+body.inkline.-dark .defaultLayout {
+    .tileBlock,.loadingBlock {
+        background: $darkViolet;
+    }
+    .tileBlock .tileHeadline .returnBtn i {
+        color: $white;
+    }
+}

@@ -1,0 +1,182 @@
+{
+  "author": "Matter Labs",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "bugs": {
+    "url": "https://github.com/matter-labs/zksync-website/issues"
+  },
+  "dependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/runtime": "^7.12.5",
+    "@ethersproject/logger": "^5.0.8",
+    "@nuxt/typescript-runtime": "^2.0.0",
+    "@nuxtjs/axios": "latest",
+    "@nuxtjs/google-gtag": "^1.0.4",
+    "@nuxtjs/pwa": "^3.3.5",
+    "@nuxtjs/sentry": "^5.0.0",
+    "@nuxtjs/toast": "latest",
+    "@types/js-cookie": "^2.2.6",
+    "@types/lodash": "^4.14.167",
+    "@walletconnect/web3-provider": "^1.3.1",
+    "aos": "^2.3.4",
+    "ethereum-blockies-base64": "^1.0.2",
+    "ethers": "^5.0.12",
+    "js-cookie": "^2.2.1",
+    "lottie-web": "^5.7.5",
+    "moment": "^2.29.1",
+    "nuxt": "^2.14.12",
+    "nuxt-webfontloader": "^1.1.0",
+    "qrcode": "^1.0.0",
+    "surge": "^0.21.7",
+    "vue": "^2.6.12",
+    "vue-qrcode": "^0.3.5",
+    "vue-recaptcha": "^1.3.0",
+    "vue-scrollto": "^2.17.1",
+    "web3": "^1.3.1",
+    "zksync": "^0.8.4"
+  },
+  "description": "zksync.io new landing",
+  "devDependencies": {
+    "@inkline/nuxt": "^2.3.5",
+    "@nuxt/types": "^2.14.12",
+    "@nuxt/typescript-build": "^2.0.3",
+    "@nuxtjs/dotenv": "1.4.1",
+    "@nuxtjs/eslint-config-typescript": "^5.0.0",
+    "@nuxtjs/style-resources": "^1.0.0",
+    "@types/jest": "^26.0.20",
+    "@vue/test-utils": "^1.1.2",
+    "babel-core": "^7.0.0-bridge.0",
+    "commitlint": "^11.0.0",
+    "dotenv": "8.2.0",
+    "eslint": "^7.16.0",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-prettier-vue": "^2.1.1",
+    "eslint-plugin-vue": "^7.0.0",
+    "fork-ts-checker-webpack-plugin": "^6.1.0",
+    "jest": "^26.6.3",
+    "lodash": "4.17.20",
+    "node-sass": "latest",
+    "prettier": "^2.2.1",
+    "sass-loader": "^10.1.1",
+    "stylelint": "^13.8.0",
+    "ts-jest": "^26.4.4",
+    "vue-jest": "^3.0.7",
+    "webpack": "^5.11.1"
+  },
+  "eslintConfig": {
+    "extends": "@nuxtjs/eslint-config"
+  },
+  "homepage": "https://zksync.io",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint --format -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://www.opensource.org/licenses/mit-license.php"
+    },
+    {
+      "type": "Apache-2.0",
+      "url": "https://opensource.org/licenses/apache2.0.php"
+    }
+  ],
+  "lint-staged": {
+    "*.{css,scss}": "yarn run lint-css",
+    "*.{ts,tsx}": [
+      "yarn run lint-ts",
+      "yarn run format"
+    ]
+  },
+  "name": "zksync-website",
+  "optionalDependencies": {
+    "@sentry/webpack-plugin": "^1.14.0",
+    "fs-extra": "^9.0.1"
+  },
+  "private": true,
+  "scripts": {
+    "copy:env": "cp .env.example .env",
+    "ci": "rm -fr node_modules && rm -rf 'public/*' && yarn copy:env && yarn install --frozen-lockfile",
+    "ci:build": "yarn ci && yarn generate --fail-on-error",
+    "start:firebase": "firebase serve --only hosting",
+    "deploy:prod": "./cli-deploy-production.sh",
+    "dev": "nuxt-ts",
+    "start": "nuxt-ts start",
+    "build": "nuxt-ts build",
+    "generate": "nuxt-ts generate",
+    "test": "jest",
+    "format": "prettier --write",
+    "lint-ts": "eslint --fix \"**/*.{ts, js, vue}\"",
+    "lint-css": "stylelint --fix \"**/*.scss\"",
+    "audit_dependencies": "yarn audit --package-lock-only --audit-level critical --json | yarn-audit-html --output audit.html"
+  },
+  "stylelint": {
+    "extends": [
+      "stylelint-config-recommended",
+      "stylelint-config-rational-order"
+    ],
+    "plugins": [
+      "stylelint-order",
+      "stylelint-scss",
+      "stylelint-config-rational-order/plugin",
+      "stylelint-high-performance-animation",
+      "stylelint-declaration-use-variable"
+    ],
+    "rules": {
+      "no-empty-source": [
+        true,
+        {
+          "severity": "warning"
+        }
+      ],
+      "plugin/no-low-performance-animation-properties": [
+        true,
+        {
+          "severity": "warning"
+        }
+      ],
+      "sh-waqar/declaration-use-variable": [
+        [
+          "/color/",
+          "font-size",
+          "font-family",
+          "font-weight"
+        ]
+      ],
+      "order/properties-order": [],
+      "plugin/rational-order": [
+        true,
+        {
+          "border-in-box-model": false,
+          "empty-line-between-groups": false
+        }
+      ],
+      "selector-type-no-unknown": [
+        true,
+        {
+          "ignore": [
+            "custom-elements"
+          ]
+        }
+      ],
+      "no-descending-specificity": true,
+      "at-rule-no-unknown": null,
+      "scss/at-rule-no-unknown": true
+    }
+  },
+  "version": "2.1.0-beta"
+}

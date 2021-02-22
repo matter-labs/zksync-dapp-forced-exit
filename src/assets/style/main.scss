@@ -1,0 +1,23 @@
+// Core
+@import "./variables.scss";
+@import "./default.scss";
+@import "./transitions.scss";
+@import "./fonts.scss";
+
+//Layouts
+@import "./layouts/default.scss";
+
+//Blocks
+@import "./blocks/logo.scss";
+@import "./blocks/cookie.scss";
+@import "./blocks/tileBlock.scss";
+@import "./blocks/socialBlock.scss";
+
+//Components
+@import "./components/loader.scss";
+@import "./components/dropdownBlock.scss";
+@import "./components/userImg.scss";
+@import "./components/walletAddress.scss";
+
+//Pages
+@import "./pages/index.scss";

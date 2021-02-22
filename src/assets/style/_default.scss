@@ -1,0 +1,157 @@
+#__nuxt,#__layout,.defaultLayout {
+  width: 100%;
+  height: max-content;
+  min-height: 100vh;
+}
+#nuxt-loading {
+  background-color: $darkViolet !important;
+}
+head {
+  display: none;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.secondaryText {
+  font-size: 16px;
+  color: $gray;
+}
+.linkText {
+  font-size: 16px;
+  color: $lightViolet;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+.linkItem {
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 400;
+  transition: color $transition1;
+  text-decoration: none !important;
+  cursor: pointer;
+  
+  &:hover {
+    color: $lightViolet !important;
+  }
+}
+
+.desktopOnly {
+  @media screen and (max-width: $mobile+1) {
+    display: none !important;
+  }
+}
+.mobileOnly {
+  @media screen and (min-width: $mobile) {
+    display: none !important;
+  }
+}
+
+body.inkline {
+  .button {
+    &.-link {
+      text-decoration: none !important;
+      color: $lightViolet !important;
+      border-radius: 4px;
+      padding: 7px 12px;
+    }
+  }
+
+  &.-light {
+    background-color: #f3f4f7;
+    .projectLogo {
+      .logoLetter {
+        fill: #11142b;
+      }
+    }
+    .button {
+      &.-link {
+        &:hover {
+          background-color: transparentize($color: $gray, $amount: 0.8) !important;
+        }
+      }
+    }
+    .linkItem {
+      color: $gray;
+    }
+  }
+  &.-dark {
+    background-color: #11142b;
+    .projectLogo {
+      .logoLetter {
+        fill: #f3f4f7;
+      }
+    }
+    .button {
+      &.-link {
+        &:hover {
+          background-color: #ffffff14 !important;
+        }
+      }
+    }
+    .linkItem {
+      color: $white;
+    }
+  }
+}
+
+button.-lg.-circle {
+  .inkline-icon {
+    line-height: 2;
+  }
+}
+
+
+
+.form-input-group {
+  .form-input {
+    input {
+      font-size: 1.15rem!important;
+    }
+  }
+  &.-light {
+    .form-input {
+      input {
+        box-shadow: none !important;
+        background-color: $input-background-light !important;
+        border-color: $input-border-color-light !important;
+        &:focus {
+          border-color: $input-border-color-focus-light !important;
+        }
+      }
+    }
+    .form-input-append {
+      background-color: transparent !important;
+      &:hover {
+        background-color: rgba(0,0,0,0.01961) !important;
+      }
+    }
+  }
+  &.-dark {
+    .form-input {
+      input {
+        background-color: $input-background-dark !important;
+        border-color: $input-border-color-dark !important;
+        &:focus {
+          border-color: $input-border-color-focus-dark !important;
+        }
+      }
+    }
+    .form-input-append {
+      background-color: transparent !important;
+    }
+  }
+  .form-input.-prefixed input {
+    padding-left: 3rem !important;
+  }
+}
