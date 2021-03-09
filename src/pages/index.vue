@@ -7,7 +7,7 @@
             <i class="far fa-long-arrow-alt-left"></i>
           </div>
         </transition>
-        <div>Forcred Exit</div>  
+        <div>Alternative Withdrawal</div>  
       </div>
       <div class="formContainer">
         <transition name="fade">
@@ -93,13 +93,16 @@ import Vue from 'vue';
 
 import moment from "moment";
 import { BigNumber } from 'ethers'
-import { Balance } from '@/plugins/types'
+import { getDefaultProvider, Provider } from 'zksync';
+import { Balance, TokenPrices } from '@/plugins/types'
 
 /* import dropdown from "@/components/DropdownBlock.vue"; */
 import socialBlock from "@/blocks/SocialBlock.vue";
 import addressInput from "@/components/AddressInput.vue";
 import dropdown from "@/components/DropdownBlock.vue";
 import timeTicker from "@/components/TimeTicker.vue";
+
+const NETWORK = 'mainnet';
 
 interface requestType {
   id: number,
@@ -124,74 +127,14 @@ export default Vue.extend({
     return {
       step: 0,
       loading: false,
+      provider: null as Provider|null,
 
       /* Step 0 */
       address: '',
       
       /* Step 1 */
       search: '',
-      balancesList: [
-        {
-          symbol: "ETH",
-          status: "Verified",
-          balance: "0.0001",
-          rawBalance: BigNumber.from("100000000"),
-          verifiedBalance: "100000000",
-          tokenPrice: "10",
-          restricted: false,
-          choosed: false,
-        },
-        {
-          symbol: "DAI",
-          status: "Verified",
-          balance: "0.0001",
-          rawBalance: BigNumber.from("1000000000"),
-          verifiedBalance: "1000000000",
-          tokenPrice: "10",
-          restricted: false,
-          choosed: false,
-        },
-        {
-          symbol: "MLTT",
-          status: "Verified",
-          balance: "0.0001",
-          rawBalance: BigNumber.from("1000000000"),
-          verifiedBalance: "1000000000",
-          tokenPrice: "10",
-          restricted: false,
-          choosed: false,
-        },
-        {
-          symbol: "USDT",
-          status: "Verified",
-          balance: "0.0001",
-          rawBalance: BigNumber.from("1000000000"),
-          verifiedBalance: "1000000000",
-          tokenPrice: "10",
-          restricted: false,
-          choosed: false,
-        },
-        {
-          symbol: "USDC",
-          status: "Verified",
-          balance: "0.0001",
-          rawBalance: BigNumber.from("1000000000"),
-          verifiedBalance: "1000000000",
-          tokenPrice: "10",
-          restricted: false,
-          choosed: false,
-        },
-        {
-          symbol: "OMG",
-          status: "Verified",
-          balance: "0.0001",
-          rawBalance: BigNumber.from("1000000000"),
-          verifiedBalance: "1000000000",
-          tokenPrice: "10",
-          restricted: false,
-          choosed: false,
-        },
-      ] as Array<Balance>,
+      balancesList: [] as Array<Balance>,
       forceUpdateVal: 0,
       forceUpdateRequestsVal: 0,
 
@@ -242,17 +185,59 @@ export default Vue.extend({
       this.forceUpdateRequestsVal++;
     },
 
+    async getProvider() {
+      if(!this.provider) {
+        this.provider = await getDefaultProvider(NETWORK);
+      } 
+      return this.provider;
+    },
+
     /* Step 0 */
     checkAddress: async function() {
       this.loading=true;
       try {
-        await new Promise((resolve)=> {
-          setTimeout(() => {
-            resolve(true);
-          }, 300);
-        });
+
+        const provider = await this.getProvider();
+        const state = await provider.getState(this.address);
+
+        if (state.committed.nonce) {
+          throw new Error('Can not forced exit account with non-zero nonce');
+        }
+
+        if (!state.id || state.id === -1) {
+          throw new Error("The account does not exist in the zkSync network");
+        } 
+
+        // A person might have a bunch of tokens, so it is better to fetch prices 
+        // in paralel
+        const tokenPricesPromises = Object.keys(state.committed.balances).map(async (token) => ({
+          [token]: await provider.getTokenPrice(token)
+        }));
+        const tokenPricesArray = await Promise.all(tokenPricesPromises);
+        const tokenPricesObj = tokenPricesArray.reduce((prev, cur) => ({
+          ...prev,
+          ...cur
+        }));
+
+        this.balancesList = [];
+        Object.entries(state.committed.balances).forEach(([symbol, amount]) => {
+          const tokenPrice = tokenPricesObj[symbol] as number;
+          console.log(tokenPrice);
+          this.balancesList.push({
+            symbol,
+            status: "Pending",
+            balance: provider.tokenSet.formatToken(symbol, amount.toString()),
+            rawBalance: BigNumber.from(amount),
+            verifiedBalance: provider.tokenSet.formatToken(symbol, amount.toString()),
+            tokenPrice: tokenPrice.toString(),
+            restricted: false,
+            choosed: false,
+          });
+        }); 
+
         this.step=1;
       } catch (error) {
+        console.log(error);
         this.step=-1;
       }
       this.loading=false;
