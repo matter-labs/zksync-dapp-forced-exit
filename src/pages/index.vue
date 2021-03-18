@@ -20,18 +20,21 @@
           <address-input v-model="address" />
           <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-2" @click="checkAddress()">Continue</i-button>
         </div>
-        <div v-else-if="step===-1">
+        <div v-else-if="step===-1 && modalParams.open">
           <p class="_text-center _margin-top-0">
-            Sorry, August tomated forced exit procedure is unavailable now. In case of any inconvenience contact us by
+            {{modalParams.message}}
           </p>
-          <social-block />
-          <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
+          <social-block v-if="modalParams.social" />
+          <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
         <div class="_margin-top-2" v-else-if="step===1">
           <i-input v-model="search" placeholder="Filter tokens" maxlength="6">
             <i slot="prefix" class="far fa-search"></i>
           </i-input>
-          <div v-if="search && displayedList.length===0" class="centerBlock _margin-top-2">
+          <div v-if="balancesList.length===0" class="centerBlock _margin-top-2">
+            <span>The account's balance is empty</span>
+          </div>
+          <div v-else-if="search && displayedList.length===0" class="centerBlock _margin-top-2">
             <span>Your search <b>"{{ search }}"</b> did not match any tokens</span>
           </div>
           <div v-else class="balancesList _margin-top-1">
@@ -53,8 +56,9 @@
         </div>
         <div v-else-if="step===2">
           <p class="_text-center _margin-top-0">
-            Your request save with the number <b>#ID-{{txID}}</b>.
-            <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH to the address {{featureStatus && featureStatus.forcedExitContractAddress}} next <b>48 hours</b> to perform an alternative withdrawal
+            Your request was saved with the number <b>#ID-{{txID}}</b>.
+            <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH 
+            <br>to the address {{featureStatus && featureStatus.forcedExitContractAddress}} within the next <b>{{waitTime}}</b> to perform an alternative withdrawal
           </p>
           <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
@@ -71,6 +75,7 @@
           <div>
             <div class="_text-align-center">Requested at {{getFormattedTime(item.createdAt)}}</div>
             <div class="_text-align-center">Time to send <b>{{item.token.amount}}{{item.token.symbol}}</b>: <time-ticker :time="item.sendUntil" /></div>
+            <div class="_text-align-center">Send to <b>{{item.contractAddress}}</b></div>
             <div class="balancesList _margin-top-1">
               <div v-for="(item,index) in item.balances" :key="index" class="balanceItem" @click="setItemChecked(item)">
                 <div class="tokenSymbol">{{ item.symbol }}</div>
@@ -96,7 +101,7 @@ import { BigNumber, BigNumberish } from 'ethers'
 import { getDefaultProvider, Provider, types as SyncTypes } from 'zksync';
 import { Address, Balance } from '@/plugins/types'
 
-/* import dropdown from "@/components/DropdownBlock.vue"; */
+import utils from "@/plugins/utils";
 import socialBlock from "@/blocks/SocialBlock.vue";
 import addressInput from "@/components/AddressInput.vue";
 import dropdown from "@/components/DropdownBlock.vue";
@@ -104,6 +109,8 @@ import timeTicker from "@/components/TimeTicker.vue";
 
 const NETWORK = 'localhost';
 const FORCED_EXIT_API = 'http://localhost:3001/api/forced_exit_requests/v0.1';
+
+const UNAVALIABLE_MESSAGE = 'Sorry, the automated forced exit procedure is unavailable now. In case of any inconvenience contact us by';
 
 interface StatusResponse {
     status: 'enabled' | 'disabled';
@@ -154,6 +161,7 @@ interface requestType {
     amount: string,
     symbol: string
   },
+  contractAddress: string,
   balances: Array<Balance>
 }
 
@@ -170,6 +178,17 @@ interface WithdrawalResponse {
     fulfilledAt?: string,
 }
 
+interface ModalParams {
+  // If the open is open or not
+  open: boolean,
+  // What message is displayed
+  message: string,
+  // Are there any social links 
+  social: boolean,
+  // If it is possible to close the modal
+  closable: boolean
+}
+
 export default Vue.extend({
   components: {
     addressInput,
@@ -184,6 +203,12 @@ export default Vue.extend({
       loading: true,
       provider: null as Provider|null,
       featureStatus: null as StatusResponse|null,
+      modalParams: {
+        open: false,
+        message: '',
+        social: false,
+        closable: false
+      } as ModalParams,
 
       /* Step 0 */
       address: '',
@@ -217,6 +242,17 @@ export default Vue.extend({
       }
       return this.balancesList.filter((e: Balance) => e.symbol.toLowerCase().includes(this.search.trim().toLowerCase()));
     },
+
+    waitTime(): string {
+      const timeSeconds = this.featureStatus!.recomendedTxIntervalMillis / 1000;
+      const { hours, minutes } = utils.timeCalc(timeSeconds);
+      
+      if (minutes) {
+        return `${hours} hours and ${minutes} minutes`;
+      } else {
+        return `${hours} hours`;
+      }
+    }
   },
   async created() {
     this.featureStatus = await getStatus();
@@ -224,7 +260,7 @@ export default Vue.extend({
     if (this.featureStatus.status == 'enabled') {
       this.loading = false;
     } else {
-      this.step = -1;
+      this.setUnavaliabeModal();
     }
   },
   methods: { 
@@ -258,6 +294,10 @@ export default Vue.extend({
       return this.provider;
     },
 
+    async updateStatus() {
+      this.featureStatus = await getStatus();
+    },
+
     /* Step 0 */
     checkAddress: async function() {
       this.loading=true;
@@ -266,15 +306,15 @@ export default Vue.extend({
         const provider = await this.getProvider();
         const state = await provider.getState(this.address);
 
-        // TODO: better error-handling so show errors to the user
-        // and not only in console
-        if (state.committed.nonce) {
-          throw new Error('Can not forced exit account with non-zero nonce');
-        }
-
         if (!state.id || state.id === -1) {
           throw new Error("The account does not exist in the zkSync network");
         } 
+
+        // TODO: better error-handling so show errors to the user
+        // and not only in console
+        if (state.committed.nonce) {
+          throw new Error('Can not forced exit account with non-zero nonce.');
+        }
 
         // A person might have a bunch of tokens, so it is better to fetch prices 
         // in paralel
@@ -282,6 +322,13 @@ export default Vue.extend({
           [token]: await provider.getTokenPrice(token)
         }));
         const tokenPricesArray = await Promise.all(tokenPricesPromises);
+
+        if (!tokenPricesArray.length) {
+          this.balancesList = [];
+          this.step = 1;
+          return;
+        }
+
         const tokenPricesObj = tokenPricesArray.reduce((prev, cur) => ({
           ...prev,
           ...cur
@@ -290,7 +337,7 @@ export default Vue.extend({
         this.balancesList = [];
         Object.entries(state.committed.balances).forEach(([symbol, amount]) => {
           const tokenPrice = tokenPricesObj[symbol] as number;
-          console.log(tokenPrice);
+          
           this.balancesList.push({
             symbol,
             status: "Pending",
@@ -306,9 +353,11 @@ export default Vue.extend({
         this.step=1;
       } catch (error) {
         console.log(error);
+        this.setErrorModal(error);
         this.step=-1;
+      } finally {
+        this.loading=false;
       }
-      this.loading=false;
     },
     
     /* Step 1 */
@@ -331,6 +380,8 @@ export default Vue.extend({
       const pricePerTokenStr = this.featureStatus?.requestFee as string;
       const pricePerToken = BigNumber.from(pricePerTokenStr);
 
+      await this.updateStatus();
+
       const withdrawalReponse = await submitRequest(
         this.address,
         selectedTokens,
@@ -339,19 +390,30 @@ export default Vue.extend({
 
       this.txID=withdrawalReponse.id;
       this.step=2;
+  
 
       const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID)
 
       this.currentWithdrawalFee = this.provider?.tokenSet.formatToken("ETH", amountToSend) as string;
 
+      const createdAt = (new Date(withdrawalReponse.createdAt)).getTime();
+      const recommendedValidUntil = (new Date(createdAt + this.featureStatus!.recomendedTxIntervalMillis)).getTime();
+      const validUntil = (new Date(withdrawalReponse.validUntil)).getTime();
+
+      console.log('Theoretical valid until:', recommendedValidUntil);
+      console.log('read valid until', validUntil);
+
+      const sendUntil = Math.min(recommendedValidUntil, validUntil);
+
       this.saveToLocalStorage({
         id: this.txID, 
-        createdAt: (new Date(withdrawalReponse.createdAt)).getTime(), 
+        createdAt, 
         token: {
           amount: this.currentWithdrawalFee,
           symbol: "ETH"
         }, 
-        sendUntil: (new Date(withdrawalReponse.validUntil)).getTime(), 
+        sendUntil, 
+        contractAddress: this.featureStatus?.forcedExitContractAddress as string,
         balances: this.choosedItems
       });
 
@@ -368,6 +430,53 @@ export default Vue.extend({
     /* Step 2 */
     finish: function() {
       this.step=0;
+    },
+
+    removeModal() {
+      this.modalParams.open = false;
+    },
+
+    setUnavaliabeModal() {
+      this.step= -1;
+      this.modalParams = {
+        open: true,
+        message: UNAVALIABLE_MESSAGE,
+        social: true,
+        closable: false,
+      };
+    },
+
+    setErrorModal(err: any) {
+      this.step= -1;
+
+      this.modalParams = {
+        open: true,
+        message: err.toString() + '. If you think that this is a mistake, contact us by',
+        social: true,
+        closable: true,
+      };
+    },
+
+    setNonceModal() {
+      this.step= -1;
+
+      this.modalParams = {
+        open: true,
+        message: 'The account should have a non-zero nonce & should exist (hold any funds in the network) for at least 24 hours',
+        social: false,
+        closable: true,
+      };
+    },
+
+    setAccountDoesNotExistModal() {
+      this.step= -1;
+
+      this.modalParams = {
+        open: true,
+        message: 'The account does not exist in the zkSync network',
+        social: false,
+        closable: true,
+      };
     }
   },
 });

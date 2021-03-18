@@ -31,8 +31,8 @@ export default {
             this.forceUpdateVal++;
             const timeLeft = parseInt((this.time-new Date().getTime())/1000);
             console.log(timeLeft);
-            if(timeLeft<0) {
-                return '00:00:00';
+            if(timeLeft<=0) {
+                return 'Expired';
             }
             const { hours, minutes, seconds } = utils.timeCalc(timeLeft);
             return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
