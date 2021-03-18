@@ -18,7 +18,7 @@
         <div class="_margin-top-2" v-if="step===0">
           <div class="inputLabel">Address</div>
           <address-input v-model="address" />
-          <i-button block size="lg" variant="secondary" :disabled="!address" class="_margin-top-2" @click="checkAddress()">Continue</i-button>
+          <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-2" @click="checkAddress()">Continue</i-button>
         </div>
         <div v-else-if="step===-1">
           <p class="_text-center _margin-top-0">
@@ -54,7 +54,7 @@
         <div v-else-if="step===2">
           <p class="_text-center _margin-top-0">
             Your request save with the number <b>#ID-{{txID}}</b>.
-            <br>Please send exactly <b>12.443ETH</b> to the address next <b>48 hours</b> to perform a forcedexit
+            <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH to the address {{featureStatus && featureStatus.forcedExitContractAddress}} next <b>48 hours</b> to perform an alternative withdrawal
           </p>
           <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
@@ -92,9 +92,9 @@
 import Vue from 'vue';
 
 import moment from "moment";
-import { BigNumber } from 'ethers'
-import { getDefaultProvider, Provider } from 'zksync';
-import { Balance, TokenPrices } from '@/plugins/types'
+import { BigNumber, BigNumberish } from 'ethers'
+import { getDefaultProvider, Provider, types as SyncTypes } from 'zksync';
+import { Address, Balance } from '@/plugins/types'
 
 /* import dropdown from "@/components/DropdownBlock.vue"; */
 import socialBlock from "@/blocks/SocialBlock.vue";
@@ -102,7 +102,49 @@ import addressInput from "@/components/AddressInput.vue";
 import dropdown from "@/components/DropdownBlock.vue";
 import timeTicker from "@/components/TimeTicker.vue";
 
-const NETWORK = 'mainnet';
+const NETWORK = 'localhost';
+const FORCED_EXIT_API = 'http://localhost:3001/api/forced_exit_requests/v0.1';
+
+interface StatusResponse {
+    status: 'enabled' | 'disabled';
+    requestFee: string;
+    maxTokensPerRequest: number;
+    recomendedTxIntervalMillis: number;
+    forcedExitContractAddress: Address;
+}
+
+function getEndpoint(endpoint: string) {
+  return FORCED_EXIT_API + endpoint;
+}
+
+async function getStatus() {
+    const endpoint = getEndpoint('/status');
+    const response = await fetch(endpoint);
+
+    const json = await response.json();
+    return json as StatusResponse;
+}
+
+async function submitRequest(address: string, tokens: number[], price_in_wei: BigNumberish) {
+    const endpoint = getEndpoint('/submit');
+
+    const data = {
+        target: address,
+        tokens,
+        price_in_wei: price_in_wei.toString()
+    };
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        redirect: 'follow',
+        body: JSON.stringify(data)
+    });
+
+    return await response.json();
+}
 
 interface requestType {
   id: number,
@@ -113,6 +155,19 @@ interface requestType {
     symbol: string
   },
   balances: Array<Balance>
+}
+
+interface WithdrawalResponse {
+    id: number,
+    target: SyncTypes.Address,
+    tokens: number[],
+    priceInWei: string,
+    // Date objects are json since it is how
+    // the `.json()` deserializes them
+    validUntil: string,
+    createdAt: string,
+    fulfilledBy?: string[],
+    fulfilledAt?: string,
 }
 
 export default Vue.extend({
@@ -126,8 +181,9 @@ export default Vue.extend({
   data() {
     return {
       step: 0,
-      loading: false,
+      loading: true,
       provider: null as Provider|null,
+      featureStatus: null as StatusResponse|null,
 
       /* Step 0 */
       address: '',
@@ -139,7 +195,8 @@ export default Vue.extend({
       forceUpdateRequestsVal: 0,
 
       /* Step 2 */
-      txID: 0
+      txID: 0,
+      currentWithdrawalFee: ''
     };
   },
   computed: {
@@ -161,7 +218,16 @@ export default Vue.extend({
       return this.balancesList.filter((e: Balance) => e.symbol.toLowerCase().includes(this.search.trim().toLowerCase()));
     },
   },
-  methods: {
+  async created() {
+    this.featureStatus = await getStatus();
+
+    if (this.featureStatus.status == 'enabled') {
+      this.loading = false;
+    } else {
+      this.step = -1;
+    }
+  },
+  methods: { 
     getFormattedTime: function (time: number): string {
       return moment(time).format("M/D/YYYY h:mm:ss A");
     },
@@ -200,6 +266,8 @@ export default Vue.extend({
         const provider = await this.getProvider();
         const state = await provider.getState(this.address);
 
+        // TODO: better error-handling so show errors to the user
+        // and not only in console
         if (state.committed.nonce) {
           throw new Error('Can not forced exit account with non-zero nonce');
         }
@@ -255,17 +323,42 @@ export default Vue.extend({
     },
     withdraw: async function() {
       this.loading=true;
-      await new Promise((resolve)=> {
-        setTimeout(() => {
-          resolve(true);
-        }, 600);
-      });
-      this.txID=Math.ceil(Math.random()*1000000000);
+
+      const selectedTokens = this.balancesList
+        .filter((token) => token.choosed)
+        .map((token) => this.provider?.tokenSet.resolveTokenId(token.symbol) as number);
+      
+      const pricePerTokenStr = this.featureStatus?.requestFee as string;
+      const pricePerToken = BigNumber.from(pricePerTokenStr);
+
+      const withdrawalReponse = await submitRequest(
+        this.address,
+        selectedTokens,
+        pricePerToken.mul(selectedTokens.length).toString()
+      ) as WithdrawalResponse;
+
+      this.txID=withdrawalReponse.id;
       this.step=2;
-      this.saveToLocalStorage({id: this.txID, createdAt: new Date().getTime(), token: {amount: "0.001",symbol:"ETH"}, sendUntil: new Date().getTime()+172800000, balances: this.choosedItems});
+
+      const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID)
+
+      this.currentWithdrawalFee = this.provider?.tokenSet.formatToken("ETH", amountToSend) as string;
+
+      this.saveToLocalStorage({
+        id: this.txID, 
+        createdAt: (new Date(withdrawalReponse.createdAt)).getTime(), 
+        token: {
+          amount: this.currentWithdrawalFee,
+          symbol: "ETH"
+        }, 
+        sendUntil: (new Date(withdrawalReponse.validUntil)).getTime(), 
+        balances: this.choosedItems
+      });
+
       for(let a=0; a<this.balancesList.length; a++) {
         this.balancesList[a] = {...this.balancesList[a], choosed: false}
       }
+
       this.forceUpdateVal++;
       this.address='';
       this.search='';
