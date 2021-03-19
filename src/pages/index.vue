@@ -2,11 +2,9 @@
   <div class="indexPage" :class="{'hasRequests': (requestsList.length>0 && step===0)}">
     <div class="tileBlock">
       <div class="tileHeadline h3" :class="{'withBtn': step===1}">
-        <transition name="fade">
-          <div class="returnBtn" v-if="step===1" @click="step=0">
+        <div class="returnBtn" v-if="step===1" @click="step=0">
             <i class="far fa-long-arrow-alt-left"></i>
-          </div>
-        </transition>
+        </div>
         <div>Alternative Withdrawal</div>  
       </div>
       <div class="formContainer">
