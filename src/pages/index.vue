@@ -89,11 +89,13 @@
           <div>
 
             <div class="_text-align-center">Requested at {{getFormattedTime(item.createdAt)}}</div>
-            <div class="_text-align-center">Time left to send <b>{{item.token.amount}} {{item.token.symbol}}</b>: <time-ticker :time="item.sendUntil" /></div>
-            <div class="_text-align-center">To <b>{{item.contractAddress}}</b></div>
+            <div class="_text-align-center _margin-top-1">In order for the request to be fulfilled, </div>
+            <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
+            <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
+            <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
            
             <div class="transactionDetails _margin-top-1">
-              <div class="_margin-top-1 bigText"><b>Transaction details:</b></div>
+              <div class="_margin-top-1 bigText"><b>Request details:</b></div>
               <div class="_margin-top-1 ">Target account: <b>{{item.target}}</b></div>
               <div class="_margin-top-1 ">Tokens to withdraw:</div>
               <div class="bold">
