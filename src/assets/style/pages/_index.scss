@@ -10,9 +10,28 @@
   .errorText {
     color: $red;
   }
+
+  .bigText {
+    font-size: 18px;
+  }
   
   .secondaryText {
     font-size: 15px;
+  }
+
+  .transactionDetails {
+    // align-items: center;
+    // border-bottom: 1px solid;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px;
+    // height: 60px;
+    // justify-content: space-between;
+    padding: 0 20px;
+    text-decoration: none;
+    transition: background-color $transition1, color $transition1;
+    width: 100%;
   }
 
   &.hasRequests {
@@ -41,7 +60,14 @@
       padding-bottom: 5px;
     }
   }
-  .balancesList {
+
+  .transactionDetails {
+    max-height: 100% !important;
+    box-shadow: none !important;
+    padding-bottom: 15px !important;
+  } 
+
+  .balancesList, .transactionDetails {
     box-shadow: $shadowInset;
     border-radius: $borderInsetRadius;
     background-color: #ffffff10;
@@ -189,7 +215,7 @@
 
 body.inkline {
   &.-light {
-    .balancesList {
+    .balancesList, .transactionDetails {
       &::-webkit-scrollbar-thumb {
         background-color: $input-border-color-focus-light;
       }
@@ -204,7 +230,7 @@ body.inkline {
   }
 
   &.-dark {
-    .balancesList {
+    .balancesList, .transactionDetails {
       &::-webkit-scrollbar-thumb {
         background-color: $input-border-color-focus-dark;
       }

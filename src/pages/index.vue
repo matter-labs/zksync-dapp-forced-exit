@@ -87,17 +87,17 @@
         </template>
         <template slot="default">
           <div>
+
             <div class="_text-align-center">Requested at {{getFormattedTime(item.createdAt)}}</div>
             <div class="_text-align-center">Time left to send <b>{{item.token.amount}} {{item.token.symbol}}</b>: <time-ticker :time="item.sendUntil" /></div>
             <div class="_text-align-center">To <b>{{item.contractAddress}}</b></div>
-            <div class="balancesList _margin-top-1">
-              <div v-for="(item,index) in item.balances" :key="index" class="balanceItem" @click="setItemChecked(item)">
-                <div class="tokenSymbol">{{ item.symbol }}</div>
-                <div class="rightSide">
-                  <div class="rowItem">
-                    <div class="total"><span class="balancePrice">~${{ item.balance*item.tokenPrice }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
-                  </div>
-                </div>
+           
+            <div class="transactionDetails _margin-top-1">
+              <div class="_margin-top-1 bigText"><b>Transaction details:</b></div>
+              <div class="_margin-top-1 ">Target account: <b>{{item.target}}</b></div>
+              <div class="_margin-top-1 ">Tokens to withdraw:</div>
+              <div class="bold">
+                {{ item.balances.map(bal => bal.symbol).join(' ') }}
               </div>
             </div>
           </div>
@@ -177,6 +177,7 @@ interface requestType {
   id: number,
   createdAt: number,
   sendUntil: number,
+  target: string,
   token: {
     amount: string,
     symbol: string
@@ -209,6 +210,10 @@ interface ModalParams {
   closable: boolean
 }
 
+interface TokenPricesMap {
+  [key: string]: number
+}
+
 type SubErrorType = 'Active' | 'NotExists' | 'TooYoung' | 'None' | 'Other';
 
 export default Vue.extend({
@@ -233,6 +238,7 @@ export default Vue.extend({
       } as ModalParams,
       subError: '',
       SubErrorType: 'None' as SubErrorType,
+      tokenPricesMap: {} as TokenPricesMap,
 
       /* Step 0 */
       address: '',
@@ -361,6 +367,8 @@ export default Vue.extend({
           ...cur
         }));
 
+        this.tokenPricesMap = tokenPricesObj;
+
         this.balancesList = [];
         Object.entries(state.committed.balances).forEach(([symbol, amount]) => {
           const tokenPrice = tokenPricesObj[symbol] as number;
@@ -440,7 +448,8 @@ export default Vue.extend({
           }, 
           sendUntil, 
           contractAddress: this.featureStatus?.forcedExitContractAddress as string,
-          balances: this.choosedItems
+          balances: this.choosedItems,
+          target: this.address
         });
 
         for(let a=0; a<this.balancesList.length; a++) {
