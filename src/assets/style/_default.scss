@@ -30,7 +30,12 @@ input[type=number] {
   cursor: pointer;
 
   &:hover {
+    color: $lightViolet;
     text-decoration: underline;
+  }
+
+  &:focus {
+    color: $lightViolet;
   }
 }
 .linkItem {

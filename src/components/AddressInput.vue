@@ -3,7 +3,7 @@
     <div class="walletContainer inputWallet" :class="{'error': error}" @click.self="focusInput()">
       <user-img v-if="isValid" :wallet="inputtedWallet"/>
       <div class="userImgPlaceholder userImg" v-else></div>
-      <input ref="input" v-model="inputtedWallet" autocomplete="none" class="walletAddress" maxlength="45" placeholder="0x address" spellcheck="false" type="text" @keyup.enter="$emit('enter')">
+      <input ref="input" v-model="inputtedWallet" autocomplete="none" class="walletAddress" maxlength="45" placeholder="0x-address to withdraw the funds from" spellcheck="false" type="text" @keyup.enter="$emit('enter')">
     </div>
   </div>
 </template>
@@ -31,10 +31,17 @@ export default Vue.extend({
   watch: {
     inputtedWallet (val) {
       const trimmed = val.trim()
-      this.inputtedWallet = trimmed
+
+      console.log('inputtewd', val);
+      this.inputtedWallet = trimmed;
+      this.$emit('change', '');
+
       if (val !== trimmed) {
         return
-      }
+      } 
+
+      console.log('wallet', this.inputtedWallet);
+      console.log('inputtewd', this.isValid);
       if (this.isValid) {
         this.$emit('input', val)
       } else {

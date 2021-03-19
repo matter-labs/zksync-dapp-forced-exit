@@ -6,6 +6,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  
+  .errorText {
+    color: $red;
+  }
+  
+  .secondaryText {
+    font-size: 15px;
+  }
+
   &.hasRequests {
     display: block;
     padding-bottom: 5vh;

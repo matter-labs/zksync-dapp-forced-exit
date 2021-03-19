@@ -2,7 +2,7 @@
   width: 100%;
   height: max-content;
   display: grid;
-  grid-template-columns: 27px 1fr 27px;
+  grid-template-columns: 0px 1fr;
   grid-template-rows: 100%;
   grid-gap: 10px;
   align-items: center;
@@ -36,6 +36,8 @@
     border: none;
     outline: none;
     transition: $transition1 color;
+    font-size: 17px;
+
     &::placeholder {
       font-size: 18px;
     }

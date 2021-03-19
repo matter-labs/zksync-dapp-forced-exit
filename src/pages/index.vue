@@ -16,14 +16,30 @@
           </div>
         </transition>
         <div class="_margin-top-2" v-if="step===0">
-          <div class="inputLabel">Address</div>
-          <address-input v-model="address" />
-          <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-2" @click="checkAddress()">Continue</i-button>
+          <!-- <div class="inputLabel">Address</div> -->
+          <address-input v-model="address" @change="removeError()"/>
+          <!-- <div v-if=> -->
+          <div v-if="SubErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
+            The provided account has done transactions on zkSync before.
+            <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet</a> to withdraw the funds.
+          </div>
+          <div v-if="SubErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
+            The account does not exist on zkSync network.
+          </div>
+          <div v-if="SubErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
+            To perform an alternative withdrawal an account should exist at least 24 hours.
+          </div>
+          <div v-if="SubErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
+            {{subError}}
+          </div>
+          
+          <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-1" @click="checkAddress()">Continue</i-button>
         </div>
         <div v-else-if="step===-1 && modalParams.open">
           <p class="_text-center _margin-top-0">
             {{modalParams.message}}
           </p>
+          <p class="_text-center" v-if="modalParams.social">If you think this is a mistake, contact us by</p>
           <social-block v-if="modalParams.social" />
           <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
@@ -74,8 +90,8 @@
         <template slot="default">
           <div>
             <div class="_text-align-center">Requested at {{getFormattedTime(item.createdAt)}}</div>
-            <div class="_text-align-center">Time to send <b>{{item.token.amount}}{{item.token.symbol}}</b>: <time-ticker :time="item.sendUntil" /></div>
-            <div class="_text-align-center">Send to <b>{{item.contractAddress}}</b></div>
+            <div class="_text-align-center">Time left to send <b>{{item.token.amount}} {{item.token.symbol}}</b>: <time-ticker :time="item.sendUntil" /></div>
+            <div class="_text-align-center">To <b>{{item.contractAddress}}</b></div>
             <div class="balancesList _margin-top-1">
               <div v-for="(item,index) in item.balances" :key="index" class="balanceItem" @click="setItemChecked(item)">
                 <div class="tokenSymbol">{{ item.symbol }}</div>
@@ -150,7 +166,13 @@ async function submitRequest(address: string, tokens: number[], price_in_wei: Bi
         body: JSON.stringify(data)
     });
 
-    return await response.json();
+    const json = await response.json();
+
+    if (response.status < 200 || response.status > 299) {
+      throw new Error(json.title);
+    }
+
+    return json;
 }
 
 interface requestType {
@@ -189,6 +211,8 @@ interface ModalParams {
   closable: boolean
 }
 
+type SubErrorType = 'Active' | 'NotExists' | 'TooYoung' | 'None' | 'Other';
+
 export default Vue.extend({
   components: {
     addressInput,
@@ -209,6 +233,8 @@ export default Vue.extend({
         social: false,
         closable: false
       } as ModalParams,
+      subError: '',
+      SubErrorType: 'None' as SubErrorType,
 
       /* Step 0 */
       address: '',
@@ -307,13 +333,16 @@ export default Vue.extend({
         const state = await provider.getState(this.address);
 
         if (!state.id || state.id === -1) {
-          throw new Error("The account does not exist in the zkSync network");
+          this.setAccountDoesNotExistModal();
+          return;
         } 
 
         // TODO: better error-handling so show errors to the user
         // and not only in console
         if (state.committed.nonce) {
-          throw new Error('Can not forced exit account with non-zero nonce.');
+          //this.subError = 'bad noce';
+          this.setNonceModal();
+          return;
         }
 
         // A person might have a bunch of tokens, so it is better to fetch prices 
@@ -353,7 +382,8 @@ export default Vue.extend({
         this.step=1;
       } catch (error) {
         console.log(error);
-        this.setErrorModal(error);
+        this.subError = error.toString();
+      //  this.setErrorModal(error);
         this.step=-1;
       } finally {
         this.loading=false;
@@ -380,51 +410,53 @@ export default Vue.extend({
       const pricePerTokenStr = this.featureStatus?.requestFee as string;
       const pricePerToken = BigNumber.from(pricePerTokenStr);
 
-      await this.updateStatus();
+      try {
+        await this.updateStatus();
 
-      const withdrawalReponse = await submitRequest(
-        this.address,
-        selectedTokens,
-        pricePerToken.mul(selectedTokens.length).toString()
-      ) as WithdrawalResponse;
+        const withdrawalReponse = await submitRequest(
+          this.address,
+          selectedTokens,
+          pricePerToken.mul(selectedTokens.length).toString()
+        ) as WithdrawalResponse;
+        console.log('respo', withdrawalReponse);
+        this.txID=withdrawalReponse.id;
+        this.step=2;
+    
 
-      this.txID=withdrawalReponse.id;
-      this.step=2;
-  
+        const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID)
 
-      const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID)
+        this.currentWithdrawalFee = this.provider?.tokenSet.formatToken("ETH", amountToSend) as string;
 
-      this.currentWithdrawalFee = this.provider?.tokenSet.formatToken("ETH", amountToSend) as string;
+        const createdAt = (new Date(withdrawalReponse.createdAt)).getTime();
+        const recommendedValidUntil = (new Date(createdAt + this.featureStatus!.recomendedTxIntervalMillis)).getTime();
+        const validUntil = (new Date(withdrawalReponse.validUntil)).getTime();
 
-      const createdAt = (new Date(withdrawalReponse.createdAt)).getTime();
-      const recommendedValidUntil = (new Date(createdAt + this.featureStatus!.recomendedTxIntervalMillis)).getTime();
-      const validUntil = (new Date(withdrawalReponse.validUntil)).getTime();
+        const sendUntil = Math.min(recommendedValidUntil, validUntil);
 
-      console.log('Theoretical valid until:', recommendedValidUntil);
-      console.log('read valid until', validUntil);
+        this.saveToLocalStorage({
+          id: this.txID, 
+          createdAt, 
+          token: {
+            amount: this.currentWithdrawalFee,
+            symbol: "ETH"
+          }, 
+          sendUntil, 
+          contractAddress: this.featureStatus?.forcedExitContractAddress as string,
+          balances: this.choosedItems
+        });
 
-      const sendUntil = Math.min(recommendedValidUntil, validUntil);
-
-      this.saveToLocalStorage({
-        id: this.txID, 
-        createdAt, 
-        token: {
-          amount: this.currentWithdrawalFee,
-          symbol: "ETH"
-        }, 
-        sendUntil, 
-        contractAddress: this.featureStatus?.forcedExitContractAddress as string,
-        balances: this.choosedItems
-      });
-
-      for(let a=0; a<this.balancesList.length; a++) {
-        this.balancesList[a] = {...this.balancesList[a], choosed: false}
+        for(let a=0; a<this.balancesList.length; a++) {
+          this.balancesList[a] = {...this.balancesList[a], choosed: false}
+        }
+      } catch(err) {
+        this.setErrorModal(err);
+        this.step = -1;
+      } finally {
+        this.forceUpdateVal++;
+        this.address='';
+        this.search='';
+        this.loading=false;
       }
-
-      this.forceUpdateVal++;
-      this.address='';
-      this.search='';
-      this.loading=false;
     },
 
     /* Step 2 */
@@ -451,32 +483,44 @@ export default Vue.extend({
 
       this.modalParams = {
         open: true,
-        message: err.toString() + '. If you think that this is a mistake, contact us by',
+        message: err.toString(),
         social: true,
         closable: true,
       };
     },
 
     setNonceModal() {
-      this.step= -1;
+      //this.step= -1;
 
-      this.modalParams = {
-        open: true,
-        message: 'The account should have a non-zero nonce & should exist (hold any funds in the network) for at least 24 hours',
-        social: false,
-        closable: true,
-      };
+      this.SubErrorType = 'Active';
+      this.subError = 'The account that had any activity on zkSync can only use the wallet to withdraw';
+
+      // this.modalParams = {
+      //   open: true,
+      //   message: 'The account should have a zero nonce & should exist (hold any funds in the network) for at least 24 hours',
+      //   social: false,
+      //   closable: true,
+      // };
     },
 
     setAccountDoesNotExistModal() {
-      this.step= -1;
 
-      this.modalParams = {
-        open: true,
-        message: 'The account does not exist in the zkSync network',
-        social: false,
-        closable: true,
-      };
+      this.SubErrorType = 'NotExists';
+      this.subError = 'The account does not exist in the zkSync network';
+
+      // this.step= -1;
+
+      // this.modalParams = {
+      //   open: true,
+      //   message: 'The account does not exist in the zkSync network',
+      //   social: false,
+      //   closable: true,
+      // };
+    },
+
+    removeError(){
+      this.subError = '';
+      this.SubErrorType = 'None';
     }
   },
 });
