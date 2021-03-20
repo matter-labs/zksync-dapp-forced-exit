@@ -15,7 +15,7 @@
         </transition>
         <div class="_margin-top-2" v-if="step===0">
           <!-- <div class="inputLabel">Address</div> -->
-          <address-input v-model="address" @change="removeError()"/>
+          <address-input v-model="address" @change="setSubError"/>
           <!-- <div v-if=> -->
           <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
             The provided account has done transactions on zkSync before.
@@ -536,6 +536,17 @@ export default Vue.extend({
         closable: true,
       };
     },
+
+
+    setSubError(err: any) {
+      if(!err) {
+        this.removeError();
+      } else {
+      //console.log('here comes', err);
+        this.subErrorType = 'Other';
+        this.subError = err.toString();
+      }
+    },  
 
     setTooYoungModal() {
         this.subErrorType = 'TooYoung';

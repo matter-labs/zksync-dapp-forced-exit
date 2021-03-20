@@ -32,16 +32,13 @@ export default Vue.extend({
     inputtedWallet (val) {
       const trimmed = val.trim()
 
-      console.log('inputtewd', val);
       this.inputtedWallet = trimmed;
-      this.$emit('change', '');
+      this.$emit('change', this.error || '');
 
       if (val !== trimmed) {
         return
       } 
 
-      console.log('wallet', this.inputtedWallet);
-      console.log('inputtewd', this.isValid);
       if (this.isValid) {
         this.$emit('input', val)
       } else {
@@ -61,9 +58,13 @@ export default Vue.extend({
     isValid: function (): boolean {
       return utils.validateAddress(this.inputtedWallet)
     },
+    isLowercase: function(): boolean {
+      return this.inputtedWallet == this.inputtedWallet.toLowerCase()
+    },
     error: function (): string {
       if (this.inputtedWallet && !this.isValid) {
-        return 'Invalid address'
+        const isCheckSum = !this.isLowercase;
+        return `The address provided is not a valid ${isCheckSum ? 'checksum' : ''} Ethereum address`;
       } else {
         return ''
       }
