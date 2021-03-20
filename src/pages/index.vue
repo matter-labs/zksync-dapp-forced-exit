@@ -41,8 +41,8 @@
           <social-block v-if="modalParams.social" />
           <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
-        <div class="_margin-top-2" v-else-if="step===1">
-          <i-input v-model="search" placeholder="Filter tokens" maxlength="6">
+        <div v-else-if="step===1">
+          <i-input class="_margin-top-1" v-model="search" placeholder="Filter tokens" maxlength="6">
             <i slot="prefix" class="far fa-search"></i>
           </i-input>
           <div v-if="balancesList.length===0" class="centerBlock _margin-top-2">
@@ -52,21 +52,44 @@
             <span>Your search <b>"{{ search }}"</b> did not match any tokens</span>
           </div>
           <div v-else class="balancesList _margin-top-1">
-            <div v-for="(item,index) in displayedList" :key="index" class="balanceItem" :class="{'checked': item.choosed}" @click="setItemChecked(item)">
-              <div class="leftSide">
-                <div class="checkboxContainer">
-                  <i class="far fa-check"></i>
+            <div v-for="(item,index) in displayedList" :key="index">
+              <i-tooltip v-if="maxTokensReached && !item.choosed" class="witdth-100 height-60">
+                <div class="no-padding balanceItem disabled">
+                  <div class="leftSide">
+                    <div class="checkboxContainer">
+                      <i class="far fa-check"></i>
+                    </div>
+                    <div class="tokenSymbol">{{ item.symbol }}</div>
+                  </div>
+                  <div class="rightSide">
+                    <div class="rowItem">
+                      <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
+                    </div>
+                  </div>
+                </div>  
+                <template slot="body">Can't select more than {{featureStatus.maxTokensPerRequest}} tokens</template>
+              </i-tooltip>
+              <div v-else class="balanceItem cursor-pointer enabled" :class="{checked: item.choosed}" @click="setItemChecked(item)">
+                <div class="leftSide">
+                  <div class="checkboxContainer">
+                    <i class="far fa-check"></i>
+                  </div>
+                  <div class="tokenSymbol">{{ item.symbol }}</div>
                 </div>
-                <div class="tokenSymbol">{{ item.symbol }}</div>
-              </div>
-              <div class="rightSide">
-                <div class="rowItem">
-                  <div class="total"><span class="balancePrice">~${{ item.balance*item.tokenPrice }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
+                <div class="rightSide">
+                  <div class="rowItem">
+                    <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          
           <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">Withdraw</i-button>
+          <div class="_text-center expectedInfo _display-block">
+              Fee: {{ currentExpectedFee }} ETH
+              <span class="expectedPrice"><span class="">~${{ fixedPrice(currentExpectedFee*tokenPricesMap['ETH']) }}</span></span>
+          </div>
         </div>
         <div v-else-if="step===2">
           <p class="_text-center _margin-top-0">
@@ -282,6 +305,16 @@ export default Vue.extend({
     };
   },
   computed: {
+    maxTokensReached: function(): boolean {
+      return this.choosedItems.length >= this.featureStatus!.maxTokensPerRequest;
+    },
+    currentExpectedFee: function(): string {
+      const feeForOneRequest = BigNumber.from(this.featureStatus?.requestFee);
+      const expectedFee = feeForOneRequest.mul(this.choosedItems.length);
+
+      return this.provider!.tokenSet.formatToken('ETH', expectedFee.toString());
+    },
+
     requestsList: function(): Array<requestType> {
       this.forceUpdateRequestsVal;
       return this.getItemsFromStorage();
@@ -321,6 +354,9 @@ export default Vue.extend({
     }
   },
   methods: {
+    fixedPrice(price: number) {
+      return price.toFixed(2);
+    },
     hasExpired(request: requestType) {
       const timeLeft = (request.sendUntil-(new Date()).getTime())/1000;
       return timeLeft <= 0;
@@ -408,6 +444,10 @@ export default Vue.extend({
           ...cur
         }));
 
+        if(!tokenPricesObj['ETH']) {
+          tokenPricesObj['ETH'] = await this.provider!.getTokenPrice('ETH');
+        }
+
         this.tokenPricesMap = tokenPricesObj;
 
         this.balancesList = [];
@@ -425,6 +465,14 @@ export default Vue.extend({
             choosed: false,
           });
         }); 
+
+        this.balancesList.sort((balance1, balance2) => {
+          if (balance1.symbol < balance2.symbol) {
+            return -1;
+          } else {
+            return 1;
+          }
+        });
 
         this.step=1;
       } catch (error) {

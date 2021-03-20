@@ -19,6 +19,32 @@
     font-size: 15px;
   }
 
+  .color-gray {
+    color: $gray;
+  }
+
+  .expectedPrice {
+    color: $gray;
+    font-size: 15px;
+  }
+
+  .expectedInfo {
+    position: relative;
+    bottom: -6px;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .no-padding {
+    padding: 0;
+  }
+
+  .witdth-100 {
+    width: 100% !important;
+  }
+
   .transactionDetails {
     // align-items: center;
     // border-bottom: 1px solid;
@@ -71,8 +97,6 @@
     box-shadow: $shadowInset;
     border-radius: $borderInsetRadius;
     background-color: #ffffff10;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
     width: 100%;
     max-height: 30vh;
 
@@ -91,10 +115,13 @@
       border-radius: 10px;
     }
 
+    .height-60 {
+      height: 60px;
+    }
+
     .balanceItem {
       align-items: center;
       border-bottom: 1px solid;
-      cursor: pointer;
       display: flex;
       height: 60px;
       justify-content: space-between;
@@ -103,7 +130,11 @@
       transition: background-color $transition1, color $transition1;
       width: 100%;
 
-      &:hover {
+      &.disabled {
+        opacity: 0.5;
+      }
+
+      &:hover.enabled,:hover.checked {
         background-color: transparentize($color: $gray, $amount: 0.9) !important;
       }
       &.checked {
