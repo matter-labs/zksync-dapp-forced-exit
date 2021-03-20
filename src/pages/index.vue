@@ -17,17 +17,17 @@
           <!-- <div class="inputLabel">Address</div> -->
           <address-input v-model="address" @change="removeError()"/>
           <!-- <div v-if=> -->
-          <div v-if="SubErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
+          <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
             The provided account has done transactions on zkSync before.
             <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet</a> to withdraw the funds.
           </div>
-          <div v-if="SubErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
+          <div v-if="subErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
             The account does not exist on zkSync network.
           </div>
-          <div v-if="SubErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
-            To perform an alternative withdrawal an account should exist at least 24 hours.
+          <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
+            To perform an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
           </div>
-          <div v-if="SubErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
+          <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
             {{subError}}
           </div>
           
@@ -70,9 +70,9 @@
         </div>
         <div v-else-if="step===2">
           <p class="_text-center _margin-top-0">
-            Your request was saved with the number <b>#ID-{{txID}}</b>.
+            Your request was saved under <b>#ID-{{txID}}</b>.
             <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH 
-            <br>to the address {{featureStatus && featureStatus.forcedExitContractAddress}} within the next <b>{{waitTime}}</b> to perform an alternative withdrawal
+            <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
           </p>
           <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
@@ -87,13 +87,17 @@
         </template>
         <template slot="default">
           <div>
-
+            
             <div class="_text-align-center">Requested at {{getFormattedTime(item.createdAt)}}</div>
-            <div class="_text-align-center _margin-top-1">In order for the request to be fulfilled, </div>
-            <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
-            <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
-            <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
-           
+            <div v-if="!hasExpired(item)">
+              <div class="_text-align-center _margin-top-1">In order for the request to be fulfilled, </div>
+              <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
+              <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
+              <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
+            </div>
+            <div v-else>
+              <div class="_text-align-center _margin-top-1">The request has expired.</div>
+            </div>
             <div class="transactionDetails _margin-top-1">
               <div class="_margin-top-1 bigText"><b>Request details:</b></div>
               <div class="_margin-top-1 ">Target account: <b>{{item.target}}</b></div>
@@ -175,6 +179,18 @@ async function submitRequest(address: string, tokens: number[], price_in_wei: Bi
     return json;
 }
 
+async function checkEligibilty(address: string): Promise<boolean> {
+  const endpoint = getEndpoint(`/checks/eligibility/${address}`);
+
+  console.log(endpoint);
+
+  const response = await fetch(endpoint);
+
+  const responseObj = await response.json(); 
+
+  return responseObj.eligible;
+}
+
 interface requestType {
   id: number,
   createdAt: number,
@@ -239,7 +255,7 @@ export default Vue.extend({
         closable: false
       } as ModalParams,
       subError: '',
-      SubErrorType: 'None' as SubErrorType,
+      subErrorType: 'None' as SubErrorType,
       tokenPricesMap: {} as TokenPricesMap,
 
       /* Step 0 */
@@ -296,6 +312,10 @@ export default Vue.extend({
     }
   },
   methods: { 
+    hasExpired(request: requestType) {
+      const timeLeft = (request.sendUntil-(new Date()).getTime())/1000;
+      return timeLeft <= 0;
+    },
     getFormattedTime: function (time: number): string {
       return moment(time).format("M/D/YYYY h:mm:ss A");
     },
@@ -343,11 +363,15 @@ export default Vue.extend({
           return;
         } 
 
-        // TODO: better error-handling so show errors to the user
-        // and not only in console
         if (state.committed.nonce) {
           //this.subError = 'bad noce';
           this.setNonceModal();
+          return;
+        }
+
+        const existedForEnoughTime = await checkEligibilty(this.address);
+        if (!existedForEnoughTime) {
+          this.setTooYoungModal();
           return;
         }
 
@@ -498,10 +522,15 @@ export default Vue.extend({
       };
     },
 
+    setTooYoungModal() {
+        this.subErrorType = 'TooYoung';
+        this.subError = '';
+    },
+
     setNonceModal() {
       //this.step= -1;
 
-      this.SubErrorType = 'Active';
+      this.subErrorType = 'Active';
       this.subError = 'The account that had any activity on zkSync can only use the wallet to withdraw';
 
       // this.modalParams = {
@@ -514,7 +543,7 @@ export default Vue.extend({
 
     setAccountDoesNotExistModal() {
 
-      this.SubErrorType = 'NotExists';
+      this.subErrorType = 'NotExists';
       this.subError = 'The account does not exist in the zkSync network';
 
       // this.step= -1;
@@ -529,7 +558,7 @@ export default Vue.extend({
 
     removeError(){
       this.subError = '';
-      this.SubErrorType = 'None';
+      this.subErrorType = 'None';
     }
   },
 });

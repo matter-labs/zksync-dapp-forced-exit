@@ -22,7 +22,7 @@
   .transactionDetails {
     // align-items: center;
     // border-bottom: 1px solid;
-    cursor: pointer;
+    // cursor: pointer;
     display: flex;
     flex-direction: column;
     padding-bottom: 20px;
@@ -204,7 +204,7 @@
         }
       }
       .dropdownBody {
-        padding: 10px 20px;
+        padding: 10px 20px 15px 20px;
       }
     }
     .balanceItem {

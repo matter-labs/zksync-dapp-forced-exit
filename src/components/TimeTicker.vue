@@ -30,7 +30,6 @@ export default {
         timeStr: function() {
             this.forceUpdateVal++;
             const timeLeft = parseInt((this.time-new Date().getTime())/1000);
-            console.log(timeLeft);
             if(timeLeft<=0) {
                 return 'Expired';
             }
