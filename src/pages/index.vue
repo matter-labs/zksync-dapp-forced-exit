@@ -428,10 +428,9 @@ export default Vue.extend({
 
         this.step=1;
       } catch (error) {
-        console.log(error);
-        this.subError = error.toString();
-      //  this.setErrorModal(error);
-        this.step=-1;
+        console.log('an error handled: ', error);
+        const errorStr = error?.toString();
+        this.setErrorModal(errorStr);
       } finally {
         this.loading=false;
       }
