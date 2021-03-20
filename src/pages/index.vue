@@ -87,10 +87,18 @@
         </template>
         <template slot="default">
           <div>
-            
-            <div class="_text-align-center">Requested at {{getFormattedTime(item.createdAt)}}</div>
+            <div class="_display-flex _text-align-center">
+              Requested at {{getFormattedTime(item.createdAt)}}
+
+              <div class="removeItem" v-if="hasExpired(item)" @click="removeFromLocalStorage(item)">
+                <i-tooltip>
+                  <i class="fas fa-trash"></i>
+                  <template slot="body">Forget the request</template>
+                </i-tooltip>
+              </div>
+            </div>
             <div v-if="!hasExpired(item)">
-              <div class="_text-align-center _margin-top-1">In order for the request to be fulfilled, </div>
+              <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
               <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
               <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
               <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
@@ -99,8 +107,9 @@
               <div class="_text-align-center _margin-top-1">The request has expired.</div>
             </div>
             <div class="transactionDetails _margin-top-1">
-              <div class="_margin-top-1 bigText"><b>Request details:</b></div>
-              <div class="_margin-top-1 ">Target account: <b>{{item.target}}</b></div>
+              <div class="_margin-top-1 bigText"><b>Details:</b></div>
+              <div class="_margin-top-1 ">Account:</div> 
+              <div class="bold">{{item.target}}</div>
               <div class="_margin-top-1 ">Tokens to withdraw:</div>
               <div class="bold">
                 {{ item.balances.map(bal => bal.symbol).join(' ') }}
@@ -311,7 +320,7 @@ export default Vue.extend({
       this.setUnavaliabeModal();
     }
   },
-  methods: { 
+  methods: {
     hasExpired(request: requestType) {
       const timeLeft = (request.sendUntil-(new Date()).getTime())/1000;
       return timeLeft <= 0;
@@ -335,6 +344,12 @@ export default Vue.extend({
     saveToLocalStorage: function(tx: requestType) {
       var newData = this.getItemsFromStorage();
       newData.push(tx);
+      localStorage.setItem('forcedExitRequests', JSON.stringify(newData));
+      this.forceUpdateRequestsVal++;
+    },
+    removeFromLocalStorage(request: requestType) {
+      var newData = this.getItemsFromStorage();
+      newData = newData.filter((r) => r.id != request.id);
       localStorage.setItem('forcedExitRequests', JSON.stringify(newData));
       this.forceUpdateRequestsVal++;
     },

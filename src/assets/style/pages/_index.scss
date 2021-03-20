@@ -213,6 +213,19 @@
   }
 }
 
+.removeItem {
+  margin-left: auto;
+  // display: flex;
+  padding-right: 10px;
+  flex-direction: row-reverse;
+
+  cursor: pointer;
+
+  &:hover {
+    color: $lightViolet;
+  }
+}
+
 body.inkline {
   &.-light {
     .balancesList, .transactionDetails {
