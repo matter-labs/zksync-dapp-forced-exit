@@ -1,60 +1,78 @@
 <template>
-  <div class="indexPage" :class="{'hasRequests': (requestsList.length>0 && step===0)}">
-    <div class="tileBlock">
-      <div class="tileHeadline h3" :class="{'withBtn': step===1}">
-        <div class="returnBtn" v-if="step===1" @click="step=0">
-            <i class="far fa-long-arrow-alt-left"></i>
+  <div >
+    <header-component />
+    <!-- <logo class="_margin-top-1"/> -->
+    <div class="indexPage" :class="{'hasRequests': (requestsList.length>0 && step===0)}">
+      <div class="tileBlock">
+        <div class="tileHeadline h3" :class="{'withBtn': step===1}">
+          <div class="returnBtn" v-if="step===1" @click="step=0">
+              <i class="far fa-long-arrow-alt-left"></i>
+          </div>
+          <div>Alternative Withdrawal</div>  
         </div>
-        <div>Alternative Withdrawal</div>  
-      </div>
-      <div class="formContainer">
-        <transition name="fade">
-          <div v-if="loading" class="centerBlock loadingBlock">
-            <loader/>
+        <div class="formContainer">
+          <transition name="fade">
+            <div v-if="loading" class="centerBlock loadingBlock">
+              <loader/>
+            </div>
+          </transition>
+          <div class="_margin-top-2" v-if="step===0">
+            <!-- <div class="inputLabel">Address</div> -->
+            <address-input v-model="address" @change="setSubError"/>
+            <!-- <div v-if=> -->
+            <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
+              The provided account has done transactions on zkSync before.
+              <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet</a> to withdraw the funds.
+            </div>
+            <div v-if="subErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
+              The account does not exist on zkSync network.
+            </div>
+            <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
+              To perform an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
+            </div>
+            <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
+              {{subError}}
+            </div>
+            
+            <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-1" @click="checkAddress()">Continue</i-button>
           </div>
-        </transition>
-        <div class="_margin-top-2" v-if="step===0">
-          <!-- <div class="inputLabel">Address</div> -->
-          <address-input v-model="address" @change="setSubError"/>
-          <!-- <div v-if=> -->
-          <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
-            The provided account has done transactions on zkSync before.
-            <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet</a> to withdraw the funds.
+          <div v-else-if="step===-1 && modalParams.open">
+            <p class="_text-center _margin-top-0">
+              {{modalParams.message}}
+            </p>
+            <p class="_text-center" v-if="modalParams.social">If you think this is a mistake, contact us by</p>
+            <support-block v-if="modalParams.social" />
+            <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
-          <div v-if="subErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
-            The account does not exist on zkSync network.
-          </div>
-          <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
-            To perform an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
-          </div>
-          <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
-            {{subError}}
-          </div>
-          
-          <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-1" @click="checkAddress()">Continue</i-button>
-        </div>
-        <div v-else-if="step===-1 && modalParams.open">
-          <p class="_text-center _margin-top-0">
-            {{modalParams.message}}
-          </p>
-          <p class="_text-center" v-if="modalParams.social">If you think this is a mistake, contact us by</p>
-          <social-block v-if="modalParams.social" />
-          <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
-        </div>
-        <div v-else-if="step===1">
-          <i-input class="_margin-top-1" v-model="search" placeholder="Filter tokens" maxlength="6">
-            <i slot="prefix" class="far fa-search"></i>
-          </i-input>
-          <div v-if="balancesList.length===0" class="centerBlock _margin-top-2">
-            <span>The account's balance is empty</span>
-          </div>
-          <div v-else-if="search && displayedList.length===0" class="centerBlock _margin-top-2">
-            <span>Your search <b>"{{ search }}"</b> did not match any tokens</span>
-          </div>
-          <div v-else class="balancesList _margin-top-1">
-            <div v-for="(item,index) in displayedList" :key="index">
-              <i-tooltip v-if="maxTokensReached && !item.choosed" class="witdth-100 height-60">
-                <div class="no-padding balanceItem disabled">
+          <div v-else-if="step===1">
+            <i-input class="_margin-top-1" v-model="search" placeholder="Filter tokens" maxlength="6">
+              <i slot="prefix" class="far fa-search"></i>
+            </i-input>
+            <div v-if="balancesList.length===0" class="centerBlock _margin-top-2">
+              <span>The account's balance is empty</span>
+            </div>
+            <div v-else-if="search && displayedList.length===0" class="centerBlock _margin-top-2">
+              <span>Your search <b>"{{ search }}"</b> did not match any tokens</span>
+            </div>
+            <div v-else class="balancesList _margin-top-1">
+              <div v-for="(item,index) in displayedList" :key="index">
+                <i-tooltip v-if="maxTokensReached && !item.choosed" class="witdth-100 height-60">
+                  <div class="no-padding balanceItem disabled">
+                    <div class="leftSide">
+                      <div class="checkboxContainer">
+                        <i class="far fa-check"></i>
+                      </div>
+                      <div class="tokenSymbol">{{ item.symbol }}</div>
+                    </div>
+                    <div class="rightSide">
+                      <div class="rowItem">
+                        <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
+                      </div>
+                    </div>
+                  </div>  
+                  <template slot="body">Can't select more than {{featureStatus.maxTokensPerRequest}} tokens</template>
+                </i-tooltip>
+                <div v-else class="balanceItem cursor-pointer enabled" :class="{checked: item.choosed}" @click="setItemChecked(item)">
                   <div class="leftSide">
                     <div class="checkboxContainer">
                       <i class="far fa-check"></i>
@@ -66,81 +84,67 @@
                       <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
                     </div>
                   </div>
-                </div>  
-                <template slot="body">Can't select more than {{featureStatus.maxTokensPerRequest}} tokens</template>
-              </i-tooltip>
-              <div v-else class="balanceItem cursor-pointer enabled" :class="{checked: item.choosed}" @click="setItemChecked(item)">
-                <div class="leftSide">
-                  <div class="checkboxContainer">
-                    <i class="far fa-check"></i>
-                  </div>
-                  <div class="tokenSymbol">{{ item.symbol }}</div>
-                </div>
-                <div class="rightSide">
-                  <div class="rowItem">
-                    <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
-                  </div>
                 </div>
               </div>
             </div>
+            
+            <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">Withdraw</i-button>
+            <div class="_text-center expectedInfo _display-block">
+                Fee: {{ currentExpectedFee }} ETH
+                <span class="expectedPrice"><span class="">~${{ fixedPrice(currentExpectedFee*tokenPricesMap['ETH']) }}</span></span>
+            </div>
           </div>
-          
-          <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">Withdraw</i-button>
-          <div class="_text-center expectedInfo _display-block">
-              Fee: {{ currentExpectedFee }} ETH
-              <span class="expectedPrice"><span class="">~${{ fixedPrice(currentExpectedFee*tokenPricesMap['ETH']) }}</span></span>
+          <div v-else-if="step===2">
+            <p class="_text-center _margin-top-0">
+              Your request was saved under <b>#ID-{{txID}}</b>.
+              <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH 
+              <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+            </p>
+            <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
-        </div>
-        <div v-else-if="step===2">
-          <p class="_text-center _margin-top-0">
-            Your request was saved under <b>#ID-{{txID}}</b>.
-            <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH 
-            <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
-          </p>
-          <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
         </div>
       </div>
-    </div>
-    <div class="dropdownsContainer" v-if="step===0">
-      <dropdown v-for="(item, index) in requestsList" :key="index">
-        <template slot="header">
-          <span>
-            <span class="gray">#ID-</span>{{item.id}}
-          </span>
-        </template>
-        <template slot="default">
-          <div>
-            <div class="_display-flex _text-align-center">
-              Requested at {{getFormattedTime(item.createdAt)}}
+      <div class="dropdownsContainer" v-if="step===0">
+        <dropdown v-for="(item, index) in requestsList" :key="index">
+          <template slot="header">
+            <span>
+              <span class="gray">#ID-</span>{{item.id}}
+            </span>
+          </template>
+          <template slot="default">
+            <div>
+              <div class="_display-flex _text-align-center">
+                Requested at {{getFormattedTime(item.createdAt)}}
 
-              <div class="removeItem" v-if="hasExpired(item)" @click="removeFromLocalStorage(item)">
-                <i-tooltip>
-                  <i class="fas fa-trash"></i>
-                  <template slot="body">Forget the request</template>
-                </i-tooltip>
+                <div class="removeItem" v-if="hasExpired(item)" @click="removeFromLocalStorage(item)">
+                  <i-tooltip>
+                    <i class="fas fa-trash"></i>
+                    <template slot="body">Forget the request</template>
+                  </i-tooltip>
+                </div>
+              </div>
+              <div v-if="!hasExpired(item)">
+                <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
+                <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
+                <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
+                <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
+              </div>
+              <div v-else>
+                <div class="_text-align-center _margin-top-1">The request has expired.</div>
+              </div>
+              <div class="transactionDetails _margin-top-1">
+                <div class="_margin-top-1 bigText"><b>Details:</b></div>
+                <div class="_margin-top-1 ">Account:</div> 
+                <div class="bold">{{item.target}}</div>
+                <div class="_margin-top-1 ">Tokens to withdraw:</div>
+                <div class="bold">
+                  {{ item.balances.map(bal => bal.symbol).join(' ') }}
+                </div>
               </div>
             </div>
-            <div v-if="!hasExpired(item)">
-              <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
-              <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
-              <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
-              <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
-            </div>
-            <div v-else>
-              <div class="_text-align-center _margin-top-1">The request has expired.</div>
-            </div>
-            <div class="transactionDetails _margin-top-1">
-              <div class="_margin-top-1 bigText"><b>Details:</b></div>
-              <div class="_margin-top-1 ">Account:</div> 
-              <div class="bold">{{item.target}}</div>
-              <div class="_margin-top-1 ">Tokens to withdraw:</div>
-              <div class="bold">
-                {{ item.balances.map(bal => bal.symbol).join(' ') }}
-              </div>
-            </div>
-          </div>
-        </template>
-      </dropdown>
+          </template>
+        </dropdown>
+      </div>
     </div>
   </div>
 </template>
@@ -154,10 +158,12 @@ import { getDefaultProvider, Provider, types as SyncTypes } from 'zksync';
 import { Address, Balance } from '@/plugins/types'
 
 import utils from "@/plugins/utils";
-import socialBlock from "@/blocks/SocialBlock.vue";
+import supportBlock from "@/blocks/SupportBlock.vue";
 import addressInput from "@/components/AddressInput.vue";
 import dropdown from "@/components/DropdownBlock.vue";
 import timeTicker from "@/components/TimeTicker.vue";
+import logo from "@/blocks/Logo.vue";
+import headerComponent from "@/blocks/Header.vue";
 
 const NETWORK = 'localhost';
 const FORCED_EXIT_API = 'http://localhost:3001/api/forced_exit_requests/v0.1';
@@ -271,7 +277,9 @@ export default Vue.extend({
     addressInput,
     dropdown,
     timeTicker,
-    socialBlock
+    supportBlock,
+    headerComponent,
+    logo
   },
   layout: "index",
   data() {
