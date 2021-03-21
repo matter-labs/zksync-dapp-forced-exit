@@ -101,7 +101,9 @@
               <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
             </p>
             <p class="_text-center">
-              You can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page.
+              The information about the withdrawal has been saved in the local browser storage. 
+              Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page. 
+              After the request is fulfilled, it may take up to 5 hours before the funds reach your L1 account.
             </p>
             <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
@@ -126,7 +128,16 @@
                   </i-tooltip>
                 </div>
               </div>
-              <div v-if="!hasExpired(item)">
+              <div v-if="item.fulfilledBy">
+                <div class="_text-align-center _margin-top-1">The request has been successfully fulfilled:</div>
+                <div v-for="(hash, index) in item.fulfilledBy" :key="index" class="_text-align-center">
+                  <a  :href="zkscanLinkToTx(hash)" target="_blank">
+                    Withdrawal of {{item.balances[index].symbol}}
+                  </a>
+                </div>
+                <div class="_text-align-center _margin-top-1">It may take up to 5 hours before the funds reach your L1 account.</div>
+              </div>
+              <div v-else-if="!hasExpired(item)">
                 <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
                 <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
                 <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
@@ -171,6 +182,7 @@ import logo from "@/blocks/Logo.vue";
 import headerComponent from "@/blocks/Header.vue";
 import footerComponent from "@/blocks/Footer.vue";
 
+const ZKSCAN_ADDRESS = 'http://localhost:7000';
 const NETWORK = 'localhost';
 const FORCED_EXIT_API = 'http://localhost:3001/api/forced_exit_requests/v0.1';
 
@@ -235,6 +247,25 @@ async function checkEligibilty(address: string): Promise<boolean> {
   return responseObj.eligible;
 }
 
+async function getRequest(id: number): Promise<RequestStatusResponse> {
+  const endpoint = getEndpoint(`/requests/${id}`);
+  const status = await fetch(endpoint);
+  const response = await status.json();
+
+  return response as RequestStatusResponse;
+}
+
+interface RequestStatusResponse {
+  id: number,
+  target: string,
+  tokens: number[],
+  priceInWei: string,
+  validUntil: string,
+  createdAt: string,
+  fulfilledBy: string[]|null,
+  fulfilledAt: string|null
+}
+
 interface requestType {
   id: number,
   createdAt: number,
@@ -245,7 +276,8 @@ interface requestType {
     symbol: string
   },
   contractAddress: string,
-  balances: Array<Balance>
+  balances: Array<Balance>,
+  fulfilledBy?: string[],
 }
 
 interface WithdrawalResponse {
@@ -321,7 +353,7 @@ export default Vue.extend({
   },
   computed: {
     addressZkScanLink: function(): string {
-      return `https://zkscan.io/explorer/accounts/${this.address}`;
+      return `${ZKSCAN_ADDRESS}/explorer/accounts/${this.address}`;
     },
     maxTokensReached: function(): boolean {
       return this.choosedItems.length >= this.featureStatus!.maxTokensPerRequest;
@@ -370,8 +402,49 @@ export default Vue.extend({
     } else {
       this.setUnavaliabeModal();
     }
+
+    const updateFulfilledInterval = setInterval(() => {
+        this.checkFulfilled();
+    }, 1000);
   },
   methods: {
+    zkscanLinkToTx(hash: string) {
+      return `${ZKSCAN_ADDRESS}/transactions/${hash}`;
+    },
+    async checkFulfilled() {
+      const requests = this.getItemsFromStorage();
+
+      // Here we check for each request if it has been fulfilled
+      const checkedFulfilledPromises = requests.map(async (request) => {
+        // If it has been already fulfilled, no need to check it again
+        if(request.fulfilledBy) {
+          return request;
+        }
+
+        // Note that we check if the request has been fulfilled even if it has expired 
+        // in order to take into account the fact that recommeneded time (displayed to the user)
+        // is somewhat smaller than the real expiration time to take into account reorgs and the bad
+        // luck of the sender, etc
+
+        const requestStatus = await getRequest(request.id);
+
+        if (requestStatus.fulfilledAt) {
+          return {
+            ...request,
+            fulfilledBy: requestStatus.fulfilledBy
+          } as requestType;
+        } else {
+          return request;
+        }
+      });
+
+      try {
+        const checkedFullfilled = await Promise.all(checkedFulfilledPromises);
+        this.updateLocalStorage(checkedFullfilled);
+      } catch(e) {
+        console.warn(`An error while update occured: ${e.toString()}`);
+      }
+    },
     fixedPrice(price: number) {
       return price.toFixed(2);
     },
@@ -398,13 +471,15 @@ export default Vue.extend({
     saveToLocalStorage: function(tx: requestType) {
       var newData = this.getItemsFromStorage();
       newData.push(tx);
-      localStorage.setItem('forcedExitRequests', JSON.stringify(newData));
-      this.forceUpdateRequestsVal++;
+      this.updateLocalStorage(newData);
     },
     removeFromLocalStorage(request: requestType) {
       var newData = this.getItemsFromStorage();
       newData = newData.filter((r) => r.id != request.id);
-      localStorage.setItem('forcedExitRequests', JSON.stringify(newData));
+      this.updateLocalStorage(newData);
+    },
+    updateLocalStorage: function(txs: requestType[]) {
+      localStorage.setItem('forcedExitRequests', JSON.stringify(txs));
       this.forceUpdateRequestsVal++;
     },
 
