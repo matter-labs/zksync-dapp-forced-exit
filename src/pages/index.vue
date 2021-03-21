@@ -3,12 +3,29 @@
     <header-component />
     <!-- <logo class="_margin-top-1"/> -->
     <div class="indexPage" :class="{'hasRequests': (requestsList.length>0 && step===0)}">
+      <i-modal v-model="howThisWorksModal" size="md" class="howThisWorksModal">
+        <template slot="header">How does this all work?</template>
+        <div>
+          <!-- <div>zkSync enables withdrawal from L2 to L1 within its wallet, but for the wallets 
+            which are not web3-compatible supported by zkSync natively, the alternative withdrawal can be used.</div> -->
+        <div>
+          <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets, 
+          so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client</a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
+          <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
+            <ul>
+              <li>It must exist (hold any funds) in the zkSync network for at least 24 hours.</li>
+              <li>The account must be locked (no ChangePubKey operation so far).</li>
+            </ul>
+          </div>
+          <div>The amount to compensate is somewhat higher than the base fee due to technical reasons, but the overhead is negligible (less than 0.000001 ETH).</div>
+        </div>
+      </i-modal>
       <div class="tileBlock">
         <div class="tileHeadline h3" :class="{'withBtn': step===1}">
           <div class="returnBtn" v-if="step===1" @click="step=0">
               <i class="far fa-long-arrow-alt-left"></i>
           </div>
-          <div>Alternative Withdrawal</div>  
+          <div class="_margin-left-1">Alternative Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>  
         </div>
         <div class="formContainer">
           <transition name="fade">
@@ -339,6 +356,7 @@ export default Vue.extend({
 
       /* Step 0 */
       address: '',
+      howThisWorksModal: false,
       
       /* Step 1 */
       search: '',
@@ -408,6 +426,9 @@ export default Vue.extend({
     }, 1000);
   },
   methods: {
+    toggleHowThisWorksModal() {
+      this.howThisWorksModal = !this.howThisWorksModal;
+    },
     zkscanLinkToTx(hash: string) {
       return `${ZKSCAN_ADDRESS}/transactions/${hash}`;
     },

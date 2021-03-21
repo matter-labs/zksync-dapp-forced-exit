@@ -3,7 +3,7 @@
 .mainFooter {
   height: 90px;
   font-weight: normal;
-  background-color: transparentize($color: $black, $amount: 0.7);
+  background-color: transparent;
 
   & > .container {
     max-width: 870px;

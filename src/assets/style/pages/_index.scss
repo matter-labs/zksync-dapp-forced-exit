@@ -11,6 +11,16 @@
 
   // justify-content: center;
   
+  .questionMark {
+    // top: 0px;
+    // right: -33px;
+    display: inline-block !important;
+
+    position: relative;
+    top: -7.5px;
+    right: 7px;
+  }
+
   .errorText {
     color: $red;
   }
@@ -263,7 +273,7 @@
 
 body.inkline {
   &.-light {
-    .balancesList, .transactionDetails {
+    .balancesList, .transactionDetails, .howThisWorksModal {
       &::-webkit-scrollbar-thumb {
         background-color: $input-border-color-focus-light;
       }
@@ -278,7 +288,7 @@ body.inkline {
   }
 
   &.-dark {
-    .balancesList, .transactionDetails {
+    .balancesList, .transactionDetails, .howThisWorksModal {
       &::-webkit-scrollbar-thumb {
         background-color: $input-border-color-focus-dark;
       }
