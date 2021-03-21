@@ -4,7 +4,7 @@
       <i-container>
         <i-row>
           <i-column :xs="12" :md="4" class="_padding-left-0">
-            <logo/>
+            <a href="http://zksync.io/" target="_blank"><logo/></a>
           </i-column>
           <i-column :xs="12" :md="4" class="_margin-left-auto _padding-right-0 _justify-content-end desktopOnly">
             <social-block/>

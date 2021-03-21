@@ -146,6 +146,8 @@
         </dropdown>
       </div>
     </div>
+    
+    <footer-component />
   </div>
 </template>
 
@@ -164,6 +166,7 @@ import dropdown from "@/components/DropdownBlock.vue";
 import timeTicker from "@/components/TimeTicker.vue";
 import logo from "@/blocks/Logo.vue";
 import headerComponent from "@/blocks/Header.vue";
+import footerComponent from "@/blocks/Footer.vue";
 
 const NETWORK = 'localhost';
 const FORCED_EXIT_API = 'http://localhost:3001/api/forced_exit_requests/v0.1';
@@ -279,6 +282,7 @@ export default Vue.extend({
     timeTicker,
     supportBlock,
     headerComponent,
+    footerComponent,
     logo
   },
   layout: "index",
