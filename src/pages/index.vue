@@ -100,6 +100,9 @@
               <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH 
               <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
             </p>
+            <p class="_text-center">
+              You can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page.
+            </p>
             <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
         </div>
@@ -146,7 +149,7 @@
         </dropdown>
       </div>
     </div>
-    
+
     <footer-component />
   </div>
 </template>
@@ -317,6 +320,9 @@ export default Vue.extend({
     };
   },
   computed: {
+    addressZkScanLink: function(): string {
+      return `https://zkscan.io/explorer/accounts/${this.address}`;
+    },
     maxTokensReached: function(): boolean {
       return this.choosedItems.length >= this.featureStatus!.maxTokensPerRequest;
     },
@@ -558,9 +564,9 @@ export default Vue.extend({
       } catch(err) {
         this.setErrorModal(err);
         this.step = -1;
+        this.address='';
       } finally {
         this.forceUpdateVal++;
-        this.address='';
         this.search='';
         this.loading=false;
       }
@@ -568,6 +574,7 @@ export default Vue.extend({
 
     /* Step 2 */
     finish: function() {
+      this.address='';
       this.step=0;
     },
 
