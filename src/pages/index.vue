@@ -107,7 +107,7 @@
             
             <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">Withdraw</i-button>
             <div class="_text-center expectedInfo _display-block">
-                Fee: {{ currentExpectedFee }} ETH
+                Fee: ~{{ currentExpectedFee }} ETH
                 <span class="expectedPrice"><span class="">~${{ fixedPrice(currentExpectedFee*tokenPricesMap['ETH']) }}</span></span>
             </div>
           </div>
@@ -138,7 +138,7 @@
               <div class="_display-flex _text-align-center">
                 Requested at {{getFormattedTime(item.createdAt)}}
 
-                <div class="removeItem" v-if="hasExpired(item)" @click="removeFromLocalStorage(item)">
+                <div class="removeItem" @click="removeFromLocalStorage(item)">
                   <i-tooltip>
                     <i class="fas fa-trash"></i>
                     <template slot="body">Forget the request</template>
@@ -371,7 +371,7 @@ export default Vue.extend({
   },
   computed: {
     addressZkScanLink: function(): string {
-      return `${ZKSCAN_ADDRESS}/explorer/accounts/${this.address}`;
+      return `${ZKSCAN_ADDRESS}/accounts/${this.address}`;
     },
     maxTokensReached: function(): boolean {
       return this.choosedItems.length >= this.featureStatus!.maxTokensPerRequest;
