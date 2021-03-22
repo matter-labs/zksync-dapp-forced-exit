@@ -162,10 +162,14 @@
                 <div class="_margin-top-1 bigText"><b>Details:</b></div>
                 <div class="_margin-top-1 ">Account:</div> 
                 <div class="bold">{{item.target}}</div>
-                <div class="_margin-top-1 ">Tokens to withdraw:</div>
-                <div class="bold">
-                  {{ item.balances.map(bal => bal.symbol).join(' ') }}
+                <div class="_margin-top-1 ">Tokens:</div>
+                <div :class="{'_margin-top-1': index!=0} " v-for="(balance, index) in item.balances" :key="index" >
+                  All of <b>{{balance.symbol}}</b>
+                  <br>Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
                 </div>
+                <!-- <div class="bold">
+                  {{ item.balances.map(bal => bal.symbol).join(' ') }}
+                </div> -->
               </div>
             </div>
           </template>
@@ -259,9 +263,16 @@ async function checkEligibilty(address: string): Promise<boolean> {
   return responseObj.eligible;
 }
 
-async function getRequest(id: number): Promise<RequestStatusResponse> {
+async function getRequest(id: number): Promise<RequestStatusResponse | null> {
   const endpoint = getEndpoint(`/requests/${id}`);
   const status = await fetch(endpoint);
+
+  // Not found means that very likely the request has been deleted
+  // from the DB 
+  if(status.status === 404) {
+    return null;
+  }
+
   const response = await status.json();
 
   return response as RequestStatusResponse;
@@ -282,6 +293,7 @@ interface requestType {
   id: number,
   createdAt: number,
   sendUntil: number,
+  notFoundCount: number,
   target: string,
   token: {
     amount: string,
@@ -348,6 +360,7 @@ export default Vue.extend({
       subError: '',
       subErrorType: 'None' as SubErrorType,
       tokenPricesMap: {} as TokenPricesMap,
+      cachedState: new Map<string, SyncTypes.AccountState>(),
 
       /* Step 0 */
       address: '',
@@ -417,15 +430,101 @@ export default Vue.extend({
     }
 
     const updateFulfilledInterval = setInterval(() => {
+        this.updateCachedAccountStates();
         this.checkFulfilled();
+        this.setTokenPrices();
     }, 1000);
   },
   methods: {
+    async setTokenPrices() {
+      const requests = this.getItemsFromStorage();
+      const allTokens = [] as string[];
+      requests.forEach((req) => {
+        const requestTokens = req.balances.map(bal => bal.symbol);
+        allTokens.push(...requestTokens);
+      });
+
+      const provider = await this.getProvider();
+
+      for(const token of allTokens) {
+        // No need to re-fetch the price for token if we already know it
+        if(this.tokenPricesMap[token]) {
+          continue;
+        }
+
+        try {
+          const tokenPrice = await provider.getTokenPrice(token);
+          this.tokenPricesMap[token] = tokenPrice;
+        } catch(e) {  
+          console.warn(`Console error occured while fetching price for token: ${e.toString()}`);
+        }
+      }
+
+    },
+    formattedBalance(_target: string, token: string) {
+      const target = _target.toLowerCase();
+      console.log('foramttedBalance, ', target);
+      const targetState = this.cachedState.get(target);
+
+      console.log(this.provider);
+      console.log(targetState);
+
+      if(!targetState || !this.provider) {
+        return 'Loading...';
+      }
+
+      const balance = targetState.committed.balances[token] || '0';
+      console.log(balance);
+
+      return this.provider.tokenSet.formatToken(token, balance);
+    },
     toggleHowThisWorksModal() {
       this.howThisWorksModal = !this.howThisWorksModal;
     },
     zkscanLinkToTx(hash: string) {
       return `${ZKSCAN_ADDRESS}/transactions/${hash}`;
+    },
+    updateBalancesInLocalStorage(requests: requestType[]) {
+      const newRequests = requests.map((request) => {
+        const target = request.target;
+        // For each request we go through the tokens that were queried and update balance of it
+        const balances = request.balances.map((balance) => {
+          const newBalance = this.cachedState[target][balance.symbol];
+
+          return {
+            ...balance,
+            balance: newBalance
+          } as Balance
+        }); 
+        const newRequest = { ...request, balances } as requestType;
+
+        return newRequest;
+      });
+
+      this.updateLocalStorage(newRequests);
+    },
+    async updateCachedAccountStates() {
+      const provider = await this.getProvider();
+
+      console.log('Updating...');
+
+      const requests = this.getItemsFromStorage();
+      
+      const updatePromises = requests.map(async (request) => {
+        const address = request.target.toLowerCase();
+        const accountState = await provider.getState(address);
+
+        console.log('Updating...', address, accountState);
+
+        this.cachedState.set(address, accountState);
+      });
+
+      try {
+        await Promise.all(updatePromises);
+      //  this.updateBalancesInLocalStorage(requests);
+      } catch(e) {
+        console.warn(`An error while fetching account states occured: ${e.toString()}`);
+      }
     },
     async checkFulfilled() {
       const requests = this.getItemsFromStorage();
@@ -437,6 +536,12 @@ export default Vue.extend({
           return request;
         }
 
+        // If we tried to fetch the request for 5 times with 404, then 
+        // it is likely that it was removed from the DB forever
+        if(request.notFoundCount > 5) {
+          return request;
+        }
+
         // Note that we check if the request has been fulfilled even if it has expired 
         // in order to take into account the fact that recommeneded time (displayed to the user)
         // is somewhat smaller than the real expiration time to take into account reorgs and the bad
@@ -444,12 +549,20 @@ export default Vue.extend({
 
         const requestStatus = await getRequest(request.id);
 
-        if (requestStatus.fulfilledAt) {
+        if (requestStatus?.fulfilledAt) {
           return {
             ...request,
             fulfilledBy: requestStatus.fulfilledBy
           } as requestType;
         } else {
+          // Basically if the result was 404, then we should add to a count
+          if(!requestStatus) {
+            return {
+              ...request,
+              notFoundCount: request.notFoundCount+1
+            }
+          }
+
           return request;
         }
       });
@@ -462,6 +575,10 @@ export default Vue.extend({
       }
     },
     fixedPrice(price: number) {
+      if(!isFinite(price)) {
+        return 'Loading...';
+      }
+
       return price.toFixed(2);
     },
     hasExpired(request: requestType) {
@@ -646,7 +763,8 @@ export default Vue.extend({
           sendUntil, 
           contractAddress: this.featureStatus?.forcedExitContractAddress as string,
           balances: this.choosedItems,
-          target: this.address
+          target: this.address,
+          notFoundCount: 0
         });
 
         for(let a=0; a<this.balancesList.length; a++) {
