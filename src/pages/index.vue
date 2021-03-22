@@ -1,13 +1,10 @@
 <template>
   <div >
     <header-component />
-    <!-- <logo class="_margin-top-1"/> -->
     <div class="indexPage" :class="{'hasRequests': (requestsList.length>0 && step===0)}">
       <i-modal v-model="howThisWorksModal" size="md" class="howThisWorksModal">
         <template slot="header">How does this all work?</template>
         <div>
-          <!-- <div>zkSync enables withdrawal from L2 to L1 within its wallet, but for the wallets 
-            which are not web3-compatible supported by zkSync natively, the alternative withdrawal can be used.</div> -->
         <div>
           <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets, 
           so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client</a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
@@ -34,9 +31,7 @@
             </div>
           </transition>
           <div class="_margin-top-2" v-if="step===0">
-            <!-- <div class="inputLabel">Address</div> -->
             <address-input v-model="address" @change="setSubError"/>
-            <!-- <div v-if=> -->
             <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
               The provided account has done transactions on zkSync before.
               <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet</a> to withdraw the funds.
@@ -704,7 +699,6 @@ export default Vue.extend({
       if(!err) {
         this.removeError();
       } else {
-      //console.log('here comes', err);
         this.subErrorType = 'Other';
         this.subError = err.toString();
       }
@@ -716,32 +710,13 @@ export default Vue.extend({
     },
 
     setNonceModal() {
-      //this.step= -1;
-
       this.subErrorType = 'Active';
       this.subError = 'The account that had any activity on zkSync can only use the wallet to withdraw';
-
-      // this.modalParams = {
-      //   open: true,
-      //   message: 'The account should have a zero nonce & should exist (hold any funds in the network) for at least 24 hours',
-      //   social: false,
-      //   closable: true,
-      // };
     },
 
     setAccountDoesNotExistModal() {
-
       this.subErrorType = 'NotExists';
       this.subError = 'The account does not exist in the zkSync network';
-
-      // this.step= -1;
-
-      // this.modalParams = {
-      //   open: true,
-      //   message: 'The account does not exist in the zkSync network',
-      //   social: false,
-      //   closable: true,
-      // };
     },
 
     removeError(){
