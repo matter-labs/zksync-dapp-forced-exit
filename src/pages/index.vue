@@ -254,8 +254,6 @@ async function submitRequest(address: string, tokens: number[], price_in_wei: Bi
 async function checkEligibilty(address: string): Promise<boolean> {
   const endpoint = getEndpoint(`/checks/eligibility/${address}`);
 
-  console.log(endpoint);
-
   const response = await fetch(endpoint);
 
   const responseObj = await response.json(); 
@@ -463,18 +461,13 @@ export default Vue.extend({
     },
     formattedBalance(_target: string, token: string) {
       const target = _target.toLowerCase();
-      console.log('foramttedBalance, ', target);
       const targetState = this.cachedState.get(target);
-
-      console.log(this.provider);
-      console.log(targetState);
 
       if(!targetState || !this.provider) {
         return 'Loading...';
       }
 
       const balance = targetState.committed.balances[token] || '0';
-      console.log(balance);
 
       return this.provider.tokenSet.formatToken(token, balance);
     },
@@ -505,16 +498,11 @@ export default Vue.extend({
     },
     async updateCachedAccountStates() {
       const provider = await this.getProvider();
-
-      console.log('Updating...');
-
       const requests = this.getItemsFromStorage();
       
       const updatePromises = requests.map(async (request) => {
         const address = request.target.toLowerCase();
         const accountState = await provider.getState(address);
-
-        console.log('Updating...', address, accountState);
 
         this.cachedState.set(address, accountState);
       });
@@ -738,7 +726,6 @@ export default Vue.extend({
           selectedTokens,
           pricePerToken.mul(selectedTokens.length).toString()
         ) as WithdrawalResponse;
-        console.log('respo', withdrawalReponse);
         this.txID=withdrawalReponse.id;
         this.step=2;
     
