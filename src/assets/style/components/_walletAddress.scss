@@ -45,19 +45,19 @@
   .userImgPlaceholder {
     transition: $transition1 background-color;
   }
-  .copy {
-    color: $gray;
-    font-size: 16px;
-    transition: background-color $transition1, color $transition1;
-    border-radius: 4px;
-    padding: 7px 10px;
-    box-sizing: border-box;
-    transform: translateX(-7px);
-    cursor: pointer;
+}
+.copy {
+  color: $gray;
+  font-size: 16px;
+  transition: background-color $transition1, color $transition1;
+  border-radius: 4px;
+  padding: 7px 10px;
+  box-sizing: border-box;
+  transform: translateX(-7px);
+  cursor: pointer;
 
-    &:active {
-      transition: 0.001s;
-    }
+  &:active {
+    transition: 0.001s;
   }
 }
 
@@ -71,15 +71,15 @@ body.inkline.-light .defaultLayout {
     .userImgPlaceholder {
       background-color: $white;
     }
-    .copy {
-      &:hover {
-        background-color: transparentize($color: $gray, $amount: 0.85);
-      }
+  }
+  .copy {
+    &:hover {
+      background-color: transparentize($color: $gray, $amount: 0.85);
+    }
 
-      &:active {
-        background-color: transparentize($color: $gray, $amount: 0.7);
-        color: $green;
-      }
+    &:active {
+      background-color: transparentize($color: $gray, $amount: 0.7);
+      color: $green;
     }
   }
 }
@@ -94,15 +94,15 @@ body.inkline.-dark .defaultLayout {
     .userImgPlaceholder {
       background-color: $darkViolet;
     }
-    .copy {
-      &:hover {
-        background-color: transparentize($color: $white, $amount: 0.9);
-      }
+  }
+  .copy {
+    &:hover {
+      background-color: transparentize($color: $white, $amount: 0.9);
+    }
 
-      &:active {
-        background-color: transparentize($color: $white, $amount: 0.8);
-        color: $green;
-      }
+    &:active {
+      background-color: transparentize($color: $white, $amount: 0.8);
+      color: $green;
     }
   }
 }
