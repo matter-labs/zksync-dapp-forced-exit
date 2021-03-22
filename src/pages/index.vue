@@ -109,8 +109,9 @@
           <div v-else-if="step===2">
             <p class="_text-center _margin-top-0">
               Your request was saved under <b>#ID-{{txID}}</b>.
-              <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH 
-              <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+              <br>Please send exactly <b>{{currentWithdrawalFee}} ETH</b> 
+              <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> 
+              <br>within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
             </p>
             <p class="_text-center">
               The information about the withdrawal has been saved in the local browser storage. 
@@ -135,7 +136,7 @@
 
                 <div class="removeItem" @click="removeFromLocalStorage(item)">
                   <i-tooltip>
-                    <i class="fas fa-trash"></i>
+                    <i class="trash fas fa-trash"></i>
                     <template slot="body">Forget the request</template>
                   </i-tooltip>
                 </div>
@@ -151,8 +152,22 @@
               </div>
               <div v-else-if="!hasExpired(item)">
                 <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
-                <div class="_text-align-center">send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b> </div>
-                <div class="_text-align-center">to <b>{{item.contractAddress}}</b></div>
+                <div class="_text-align-center">send <b>exactly</b> 
+                  
+                <b>{{item.token.amount}} {{item.token.symbol}}</b>
+                <i-tooltip trigger="click">
+                  <i class="copy fas fa-copy" @click="copyValue(item.token.amount)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                 </div>
+                <div class="_text-align-center">
+                  to 
+                  <b>{{item.contractAddress}}</b>
+                  <i-tooltip trigger="click">
+                  <i class="copy fas fa-copy" @click="copyValue(item.contractAddress)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                  </div>
                 <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
               </div>
               <div v-else>
@@ -167,9 +182,6 @@
                   All of <b>{{balance.symbol}}</b>
                   <br>Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
                 </div>
-                <!-- <div class="bold">
-                  {{ item.balances.map(bal => bal.symbol).join(' ') }}
-                </div> -->
               </div>
             </div>
           </template>
@@ -434,6 +446,17 @@ export default Vue.extend({
     }, 1000);
   },
   methods: {
+    copyValue(value: string) {
+      const elem = document.createElement("textarea");
+      elem.style.position = "absolute";
+      elem.style.left = -99999999 + "px";
+      elem.style.top = -99999999 + "px";
+      elem.value = value;
+      document.body.appendChild(elem);
+      elem.select();
+      document.execCommand("copy");
+      document.body.removeChild(elem);
+    },
     async setTokenPrices() {
       const requests = this.getItemsFromStorage();
       const allTokens = [] as string[];
