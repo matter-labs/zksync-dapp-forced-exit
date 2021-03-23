@@ -7,7 +7,7 @@
         <div>
         <div>
           <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
-          so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client</a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
+          so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
           <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
             <ul>
               <li>It must exist (hold any funds) in the zkSync network for at least 24 hours.</li>
@@ -43,7 +43,7 @@
             <address-input v-model="address" @change="setSubError"/>
             <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
               The provided account has done transactions on zkSync before.
-              <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet</a> to withdraw the funds.
+              <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet <i class="fas fa-external-link"></i></a> to withdraw the funds.
             </div>
             <div v-if="subErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
               The account does not exist on zkSync network.
@@ -124,13 +124,13 @@
             </p>
             <p class="_text-left">
               The information about the withdrawal has been saved in the local browser storage.
-              Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page.
+              Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan <i class="fas fa-external-link"></i></a> page.
               After the request is fulfilled, it may take up to 5 hours before the funds reach your L1 account.
             </p>
             <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
           <loading-block v-else-if="step===3">
-            <a v-if="transactionInfo.hash" class="_display-block _text-center" target="_blank"
+            <a v-if="transactionInfo.hash && currentRequest" class="_display-block _text-center" target="_blank"
               :href="transactionInfo.explorerLink">
               Link to the transaction <i class="fas fa-external-link"/>
             </a>
@@ -140,11 +140,15 @@
             </p>
             <p v-else-if="tip" class="_display-block _text-center">{{ tip }}</p>
           </loading-block>
-          <success-block v-else-if="step===4" :tx-link="transactionInfo.explorerLink" :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
-            <p class="_text-left _margin-top-1">
-              The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
-              <p> The information about the request with <b>#ID-{{txID}}</b> was saved in the browser storage. You may track the progress there.</p>
-            </p>
+          <success-block v-else-if="step===4"  :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
+            <p class="_text-center">The request has been successfully fulfilled:</p> 
+            
+            <div class="_text-center">
+              <a class="_text-center" v-for="(item, index) in currentRequest.fulfilledBy" :key="index" :href="zkscanLinkToTx(item)" target="_blank"> 
+                  Withdrawal of {{currentRequest.balances[index].symbol}} <i class="fas fa-external-link"></i>
+              </a>
+             </div>
+             <p class="_text-center _margin-top-2">It may take up to 5 hours until the funds reach your L1 account.</p>
           </success-block>
         </div>
       </div>
@@ -171,7 +175,7 @@
                 <div class="_text-align-center _margin-top-1">The request has been successfully fulfilled:</div>
                 <div v-for="(hash, index) in item.fulfilledBy" :key="index" class="_text-align-center">
                   <a  :href="zkscanLinkToTx(hash)" target="_blank">
-                    Withdrawal of {{item.balances[index].symbol}}
+                    Withdrawal of {{item.balances[index].symbol}} <i class="fas fa-external-link"></i>
                   </a>
                 </div>
                 <div class="_text-align-center _margin-top-1">It may take up to 5 hours before the funds reach your L1 account.</div>
@@ -197,7 +201,7 @@
                 <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
               </div>
               <div v-else-if="!hasExpired(item) && item.walletTx">
-                The request was fulfiiled with the following transaction:
+                The request was paid for with the following transaction:
                 <br><a :href="getEtherscanLink(item.walletTx)" target="_blank">Link to the transaction. <i class="fas fa-external-link"></i></a>
 
                 <p>The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
@@ -412,6 +416,7 @@ export default Vue.extend({
       tokenPricesMap: {} as TokenPricesMap,
       provider: null as Provider|null, 
       cachedState: new Map<string, SyncTypes.AccountState>(),
+      currentRequest: null as null|requestType,
 
       /* Step 0 */
       address: "",
@@ -542,6 +547,21 @@ export default Vue.extend({
     }
   },
   methods: {
+    checkTxStatusLoop(id: number) {
+      // We already track the status of the transaction in the id
+      // No need to make requests again
+      const interval = setInterval(() => {
+        const tx = this.getItemFromStorageById(id);
+
+        console.log('fetching tx:' , tx); 
+        this.currentRequest = tx;
+
+        if (tx?.fulfilledBy) {
+          clearInterval(interval);
+          this.step = 4;
+        }
+      }, 500);
+    },
     setWalletTx(id: number, hash: string) {
       const items = this.getItemsFromStorage();
       const newItems = items.map((request) => {
@@ -698,6 +718,7 @@ export default Vue.extend({
 
       try {
         const checkedFullfilled = await Promise.all(checkedFulfilledPromises);
+        console.log('checking ', checkedFullfilled);
         this.updateLocalStorage(checkedFullfilled);
       } catch (e) {
         console.warn(`An error while update occured: ${e.toString()}`);
@@ -732,14 +753,14 @@ export default Vue.extend({
       }
       return data.sort((a, b) => b.createdAt - a.createdAt);
     },
-    getItemFromStorageById(id: number): (false | requestType) {
+    getItemFromStorageById(id: number): (null | requestType) {
       const allRequests = this.getItemsFromStorage();
       for(const request of allRequests) {
         if(request?.id === id) {
           return request;
         }
       }
-      return false;
+      return null;
     },
     saveToLocalStorage(tx: requestType) {
       const newData = this.getItemsFromStorage();
@@ -862,6 +883,8 @@ export default Vue.extend({
       }
     },
     async withdraw() {
+      this.currentRequest = null;
+
       this.step = 3;
       const loggedInSuccessefully = await this.$store.dispatch('wallet/walletRefresh', true);
       if(!loggedInSuccessefully) {
@@ -881,15 +904,16 @@ export default Vue.extend({
 
       const ethWallet = walletData.get().ethWallet as any;
       const provider = await this.getProvider();
-      this.tip = "Confirm the transaction to withdraw";
+      this.tip = "Confirm the transaction to pay the fee";
       try {
         const amount = provider.tokenSet.parseToken('ETH', withdrawResponse.token.amount);
-        const value = BigNumber.from(amount).add(withdrawResponse.id);
+        const value = BigNumber.from(amount);
         const tx = await ethWallet.sendTransaction({
           to: this.featureStatus?.forcedExitContractAddress,
           value: value,
           gasLimit: BigNumber.from('35000')
         });
+        this.currentRequest = withdrawResponse;
         this.saveToLocalStorage(withdrawResponse);
         this.setWalletTx(withdrawResponse.id, tx.hash);
         this.transactionInfo.hash = tx.hash;
@@ -903,8 +927,8 @@ export default Vue.extend({
         this.tip = "Processing...";
         this.checkFulfilled();
 
-        this.tip = "";
-        this.step = 4;
+        this.tip = `Waiting for ${this.featureStatus?.waitConfirmations} confirmations...`;
+        this.checkTxStatusLoop(withdrawResponse.id);
       } catch (error) {
         console.log('Tx error', error);
         this.step = 1;
