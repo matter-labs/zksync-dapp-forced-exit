@@ -293,6 +293,12 @@
   top: -4px;
 }
 
+.tinyText {
+  font-size: 12px;
+  margin-top: 5px;
+  color: $gray;
+}
+
 body.inkline {
   &.-light {
     .copy {

@@ -100,6 +100,9 @@
                 Fee: ~{{ currentExpectedFee | formatToken('ETH') }} ETH
                 <span class="expectedPrice"><span class="">{{ currentExpectedFee | formatUsdAmount(tokenPricesMap['ETH'], 'ETH') }}</span></span>
             </div>
+            <div v-if="choosedItems.length>0" class="_text-center tinyText">
+              The actual fee is a little higher, but no more than by $0.01  
+            </div>
             <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-1" @click="withdraw()">{{loggedIn ? 'Withdraw with the wallet' : 'Connect wallet and Withdraw'}}</i-button>
             <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Continue with the manual withdraw</i-button>
           </div>
@@ -142,7 +145,7 @@
           </loading-block>
           <success-block v-else-if="step===4" :tx-link="transactionInfo.explorerLink" :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
             <p class="_text-left _margin-top-1">
-              The server will wait for up to 10 confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
+              The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
               <p> The information about the request with <b>#ID-{{txID}}</b> was saved in the browser storage. You may track the progress there.</p>
             </p>
           </success-block>
@@ -176,7 +179,7 @@
                 </div>
                 <div class="_text-align-center _margin-top-1">It may take up to 5 hours before the funds reach your L1 account.</div>
               </div>
-              <div v-else-if="!hasExpired(item)">
+              <div v-else-if="!hasExpired(item) && !item.walletTx">
                 <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
                 <div class="_text-align-center">send <b>exactly</b> 
                   
@@ -196,6 +199,12 @@
                   </div>
                 <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
               </div>
+              <div v-else-if="!hasExpired(item) && item.walletTx">
+                The request was fulfiiled with the following transaction:
+                <br><a :href="getEtherscanLink(item.walletTx)" target="_blank">Link to the transaction. <i class="fas fa-external-link"></i></a>
+
+                <p>The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
+              </div>
               <div v-else>
                 <div class="_text-align-center _margin-top-1">The request has expired.</div>
               </div>
@@ -206,7 +215,7 @@
                 <div class="_margin-top-1 ">Tokens:</div>
                 <div :class="{'_margin-top-1': index!=0} " v-for="(balance, index) in item.balances" :key="index" >
                   All of <b>{{balance.symbol}}</b>
-                    <span v-if="!item.fulfilledBy">
+                    <span v-if="!item.fulfilledBy && !hasExpired(item)">
                       <br>
                       Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
                     </span>
@@ -253,6 +262,7 @@ interface StatusResponse {
   maxTokensPerRequest: number;
   recomendedTxIntervalMillis: number;
   forcedExitContractAddress: Address;
+  waitConfirmations: number;
 }
 
 interface RequestStatusResponse {
@@ -280,6 +290,7 @@ interface requestType {
   fulfilledBy?: string[];
   // Number of times we tried to query for the status, but 404 was returned
   notFoundCount: number;
+  walletTx?: string;
 }
 
 interface WithdrawalResponse {
@@ -499,6 +510,7 @@ export default Vue.extend({
   async created() {
     try {
       this.featureStatus = await getStatus();
+      console.log('confirmations', this.featureStatus.waitConfirmations);
 
       console.log('f status', this.featureStatus);
 
@@ -527,6 +539,21 @@ export default Vue.extend({
     }
   },
   methods: {
+    setWalletTx(id: number, hash: string) {
+      const items = this.getItemsFromStorage();
+      const newItems = items.map((request) => {
+        if(request.id == id) {
+          return {
+            ...request,
+            walletTx: hash
+          }
+        } else {
+          return request;
+        }
+      });
+
+      this.updateLocalStorage(newItems);
+    },
     async getProvider() {
       if(!this.provider) {
         this.provider = await getDefaultProvider(ETHER_NETWORK_NAME as Network);
@@ -817,6 +844,10 @@ export default Vue.extend({
       }
     },
 
+    getEtherscanLink(hash: string): string {
+      return APP_ETH_BLOCK_EXPLORER + "/tx/" + hash;
+    },
+
     /* Step 1 */
     setItemChecked(item: Balance) {
       for (let a = 0; a < this.balancesList.length; a++) {
@@ -857,6 +888,7 @@ export default Vue.extend({
           value: value,
           gasLimit: BigNumber.from('32000')
         });
+        this.setWalletTx(withdrawResponse.id, tx.hash);
         this.transactionInfo.hash = tx.hash;
         this.transactionInfo.explorerLink = APP_ETH_BLOCK_EXPLORER + "/tx/" + tx.hash;
 
@@ -872,9 +904,10 @@ export default Vue.extend({
         this.step = 4;
       } catch (error) {
         console.log('Tx error', error);
-        this.step = 2;
+        this.step = 1;
+      } finally {
+        this.loading = false;
       }
-      this.loading = false;
     },
     withdrawManuallyAsk() {
       this.manualWarningModal=true;
