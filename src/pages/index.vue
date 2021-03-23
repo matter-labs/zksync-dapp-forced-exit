@@ -97,15 +97,15 @@
             </div>
             <div :class="{'color-gray': choosedItems.length<=0 }">
               <h4 class="_text-center">
-                Paying the fee
+                Complete withdrawal
               </h4>
               <div class="_text-center expectedInfo _display-block _margin-top-0 _padding-05">
                   In order to complete the withdrawal 
                   <br>you need to pay the fee of 
                   ~{{ currentExpectedFee | formatToken('ETH') }} ETH <span class="expectedPrice"><span class="">{{ currentExpectedFee | formatUsdAmount(tokenPricesMap['ETH'], 'ETH') }}</span></span>
               </div>
-              <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">{{'Pay via wallet'}}</i-button>
-              <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Manually complete the withdrawal</i-button>
+              <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">{{'Connect wallet to pay'}}</i-button>
+              <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Make payment manually</i-button>
             </div>
           </div>
           <div v-else-if="step===2">
@@ -146,12 +146,16 @@
             <p v-else-if="tip" class="_display-block _text-center">{{ tip }}</p>
           </loading-block>
           <success-block v-else-if="step===4"  :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
-            <p class="_text-center">The request has been successfully fulfilled:</p> 
+            <p class="_text-center">Your request has been initiated. You track the progress with the links below:</p> 
             
-            <div class="_text-center">
-              <a class="_text-center" v-for="(item, index) in currentRequest.fulfilledBy" :key="index" :href="zkscanLinkToTx(item)" target="_blank"> 
-                  Withdrawal of {{currentRequest.balances[index].symbol}} <i class="fas fa-external-link"></i>
-              </a>
+            <div class="">
+              <ul class="_display-flex _justify-content-center">
+                <li v-for="(item, index) in currentRequest.fulfilledBy" :key="index">
+                <a class="_text-center"  :href="zkscanLinkToTx(item)" target="_blank"> 
+                    {{currentRequest.balances[index].symbol}} withdrawal TX <i class="fas fa-external-link"></i>
+                </a>
+                </li>
+              </ul>
              </div>
              <p class="_text-center _margin-top-2">It may take up to 5 hours until the funds reach your L1 account.</p>
           </success-block>
