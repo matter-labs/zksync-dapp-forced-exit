@@ -20,7 +20,7 @@
       <i-modal v-model="manualWarningModal" size="md">
         <template slot="header">Manual withdraw warning</template>
         <div>
-          You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address</b> in order for the withdraw to be fulfilled.
+          You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be fulfilled.
           <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes my funds would be lost</i-checkbox>
           <i-button block variant="secondary" :disabled="!manualWarningCheckmark" class="_margin-top-1" @click="manualWarningModal=false;withdrawManually()">Continue</i-button>
           <i-button block link variant="secondary" class="_margin-top-05" @click="manualWarningModal=false">Cancel</i-button>
@@ -104,22 +104,25 @@
             <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Continue with the manual withdraw</i-button>
           </div>
           <div v-else-if="step===2">
-            <p class="_text-center _margin-top-0">
+            <p class="_text-left _margin-top-0">
               Your request was saved under <b>#ID-{{txID}}</b>.
-              <br>Please send exactly <b>{{currentWithdrawalFee}}</b> ETH
-              <i-tooltip trigger="click">
-                <i class="copy fas fa-copy _margin-left-05" @click="copyText(currentWithdrawalFee)"></i>
-                <template slot="body">Copied!</template>
-              </i-tooltip>
-              <br>
-                to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b>
+              <div class="_margin-top-1">
+                Please send 
+                <br>exactly <b>{{currentWithdrawalFee}}</b> ETH
+                <i-tooltip trigger="click">
+                  <i class="copy fas fa-copy _margin-left-05" @click="copyText(currentWithdrawalFee)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                <br>
+                to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b>
                 <i-tooltip trigger="click">
                   <i class="copy fas fa-copy _margin-left-05" @click="copyText(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
                 within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+                </div>
             </p>
-            <p class="_text-center">
+            <p class="_text-left">
               The information about the withdrawal has been saved in the local browser storage.
               Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page.
               After the request is fulfilled, it may take up to 5 hours before the funds reach your L1 account.
@@ -138,9 +141,9 @@
             <p v-else-if="tip" class="_display-block _text-center">{{ tip }}</p>
           </loading-block>
           <success-block v-else-if="step===4" :tx-link="transactionInfo.explorerLink" :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
-            <p class="_text-center _margin-top-0">
-              Request is fulfilled, it may take up to 5 hours before the funds reach your L1 account.
-              <br>Transaction will be processed shortly. Use the transaction link to track the progress.
+            <p class="_text-left _margin-top-1">
+              The server will wait for up to 10 confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
+              <p> The information about the request with <b>#ID-{{txID}}</b> was saved in the browser storage. You may track the progress there.</p>
             </p>
           </success-block>
         </div>
@@ -159,7 +162,7 @@
 
                 <div class="removeItem" @click="removeFromLocalStorage(item)">
                   <i-tooltip>
-                    <i class="fas fa-trash"></i>
+                    <i class="trash fas fa-trash"></i>
                     <template slot="body">Forget the request</template>
                   </i-tooltip>
                 </div>
@@ -175,20 +178,22 @@
               </div>
               <div v-else-if="!hasExpired(item)">
                 <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
+                <div class="_text-align-center">send <b>exactly</b> 
+                  
+                <b>{{item.token.amount}} {{item.token.symbol}}</b>
+                <i-tooltip trigger="click">
+                  <i class="copy fas fa-copy" @click="copyValue(item.token.amount)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                 </div>
                 <div class="_text-align-center">
-                  send <b>exactly</b> <b>{{item.token.amount}} {{item.token.symbol}}</b>
+                  to 
+                  <b>{{item.contractAddress}}</b>
                   <i-tooltip trigger="click">
-                    <i class="copy fas fa-copy _margin-left-05" @click="copyText(item.token.amount)"></i>
-                    <template slot="body">Copied!</template>
-                  </i-tooltip>
-                </div>
-                <div class="_text-align-center">
-                  to <b>{{item.contractAddress}}</b>
-                  <i-tooltip trigger="click">
-                    <i class="copy fas fa-copy _margin-left-05" @click="copyText(item.contractAddress)"></i>
-                    <template slot="body">Copied!</template>
-                  </i-tooltip>
-                </div>
+                  <i class="copy fas fa-copy" @click="copyValue(item.contractAddress)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                  </div>
                 <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
               </div>
               <div v-else>
@@ -196,25 +201,15 @@
               </div>
               <div class="transactionDetails _margin-top-1">
                 <div class="_margin-top-1 bigText"><b>Details:</b></div>
-                <div class="_margin-top-1">Account:</div>
-                <div class="bold">
-                  {{item.target}}
-                  <i-tooltip trigger="click">
-                    <i class="copy fas fa-copy _margin-left-05" @click="copyText(item.contractAddress)"></i>
-                    <template slot="body">Copied!</template>
-                  </i-tooltip>
-                </div>
-                <div class="_margin-top-05">Amount:</div>
-                <div class="bold">
-                  {{item.token.amount}} {{item.token.symbol}}
-                  <i-tooltip trigger="click">
-                    <i class="copy fas fa-copy _margin-left-05" @click="copyText(item.contractAddress)"></i>
-                    <template slot="body">Copied!</template>
-                  </i-tooltip>
-                </div>
-                <div class="_margin-top-05">Tokens to withdraw:</div>
-                <div class="bold">
-                  {{ item.balances.map(bal => bal.symbol).join(' ') }}
+                <div class="_margin-top-1 ">Account:</div> 
+                <div class="bold">{{item.target}}</div>
+                <div class="_margin-top-1 ">Tokens:</div>
+                <div :class="{'_margin-top-1': index!=0} " v-for="(balance, index) in item.balances" :key="index" >
+                  All of <b>{{balance.symbol}}</b>
+                    <span v-if="!item.fulfilledBy">
+                      <br>
+                      Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
+                    </span>
                 </div>
               </div>
             </div>
@@ -283,6 +278,8 @@ interface requestType {
   contractAddress: string;
   balances: Array<Balance>;
   fulfilledBy?: string[];
+  // Number of times we tried to query for the status, but 404 was returned
+  notFoundCount: number;
 }
 
 interface WithdrawalResponse {
@@ -364,9 +361,16 @@ async function checkEligibilty(address: string): Promise<boolean> {
   return responseObj.eligible;
 }
 
-async function getRequest(id: number): Promise<RequestStatusResponse> {
+async function getRequest(id: number): Promise<RequestStatusResponse | null> {
   const endpoint = getEndpoint(`/requests/${id}`);
   const status = await fetch(endpoint);
+
+  // Not found means that very likely the request has been deleted
+  // from the DB 
+  if(status.status === 404) {
+    return null;
+  }
+
   const response = await status.json();
 
   return response as RequestStatusResponse;
@@ -399,6 +403,7 @@ export default Vue.extend({
       subErrorType: "None" as SubErrorType,
       tokenPricesMap: {} as TokenPricesMap,
       provider: null as Provider|null, 
+      cachedState: new Map<string, SyncTypes.AccountState>(),
 
       /* Step 0 */
       address: "",
@@ -502,9 +507,11 @@ export default Vue.extend({
       } else {
         this.setUnavaliabeModal();
       }
-
+      
       setInterval(() => {
+        this.updateCachedAccountStates();
         this.checkFulfilled();
+        this.setTokenPrices();
       }, 1000);
       
       const onboardResult = await this.$store.dispatch("wallet/onboard");
@@ -528,21 +535,98 @@ export default Vue.extend({
       return this.provider;
     },
     copyText(text: string) {
+    
+  },
+    copyValue(value: string) {
       const elem = document.createElement("textarea");
       elem.style.position = "absolute";
       elem.style.left = -99999999 + "px";
       elem.style.top = -99999999 + "px";
-      elem.value = text;
+      elem.value = value;
       document.body.appendChild(elem);
       elem.select();
       document.execCommand("copy");
       document.body.removeChild(elem);
+    },
+    async setTokenPrices() {
+      const requests = this.getItemsFromStorage();
+      const allTokens = [] as string[];
+      requests.forEach((req) => {
+        const requestTokens = req.balances.map(bal => bal.symbol);
+        allTokens.push(...requestTokens);
+      });
+
+      const provider = await this.getProvider();
+
+      for(const token of allTokens) {
+        // No need to re-fetch the price for token if we already know it
+        if(this.tokenPricesMap[token]) {
+          continue;
+        }
+
+        try {
+          const tokenPrice = await provider.getTokenPrice(token);
+          this.tokenPricesMap[token] = tokenPrice;
+        } catch(e) {  
+          console.warn(`Console error occured while fetching price for token: ${e.toString()}`);
+        }
+      }
+
+    },
+    formattedBalance(_target: string, token: string) {
+      const target = _target.toLowerCase();
+      const targetState = this.cachedState.get(target);
+
+      if(!targetState || !this.provider) {
+        return 'Loading...';
+      }
+
+      const balance = targetState.committed.balances[token] || '0';
+
+      return this.provider.tokenSet.formatToken(token, balance);
     },
     toggleHowThisWorksModal() {
       this.howThisWorksModal = !this.howThisWorksModal;
     },
     zkscanLinkToTx(hash: string) {
       return `${APP_ZK_SCAN}/transactions/${hash}`;
+    },
+    updateBalancesInLocalStorage(requests: requestType[]) {
+      const newRequests = requests.map((request) => {
+        const target = request.target;
+        // For each request we go through the tokens that were queried and update balance of it
+        const balances = request.balances.map((balance) => {
+          const newBalance = this.cachedState[target][balance.symbol];
+
+          return {
+            ...balance,
+            balance: newBalance
+          } as Balance
+        }); 
+        const newRequest = { ...request, balances } as requestType;
+
+        return newRequest;
+      });
+
+      this.updateLocalStorage(newRequests);
+    },
+    async updateCachedAccountStates() {
+      const provider = await this.getProvider();
+      const requests = this.getItemsFromStorage();
+      
+      const updatePromises = requests.map(async (request) => {
+        const address = request.target.toLowerCase();
+        const accountState = await provider.getState(address);
+
+        this.cachedState.set(address, accountState);
+      });
+
+      try {
+        await Promise.all(updatePromises);
+      //  this.updateBalancesInLocalStorage(requests);
+      } catch(e) {
+        console.warn(`An error while fetching account states occured: ${e.toString()}`);
+      }
     },
     async checkFulfilled() {
       const requests = this.getItemsFromStorage();
@@ -554,19 +638,33 @@ export default Vue.extend({
           return request;
         }
 
-        // Note that we check if the request has been fulfilled even if it has expired
+        // If we tried to fetch the request for 5 times with 404, then 
+        // it is likely that it was removed from the DB forever
+        if(request.notFoundCount > 5) {
+          return request;
+        }
+
+        // Note that we check if the request has been fulfilled even if it has expired 
         // in order to take into account the fact that recommeneded time (displayed to the user)
         // is somewhat smaller than the real expiration time to take into account reorgs and the bad
 
         // luck of the sender, etc
         const requestStatus = await getRequest(request.id);
 
-        if (requestStatus.fulfilledAt) {
+        if (requestStatus?.fulfilledAt) {
           return {
             ...request,
             fulfilledBy: requestStatus.fulfilledBy,
           } as requestType;
         } else {
+          // Basically if the result was 404, then we should add to a count
+          if(!requestStatus) {
+            return {
+              ...request,
+              notFoundCount: request.notFoundCount+1
+            }
+          }
+
           return request;
         }
       });
@@ -577,6 +675,13 @@ export default Vue.extend({
       } catch (e) {
         console.warn(`An error while update occured: ${e.toString()}`);
       }
+    },
+    fixedPrice(price: number) {
+      if(!isFinite(price)) {
+        return 'Loading...';
+      }
+
+      return price.toFixed(2);
     },
     hasExpired(request: requestType) {
       const timeLeft = (request.sendUntil - new Date().getTime()) / 1000;
@@ -729,7 +834,8 @@ export default Vue.extend({
       this.step = 3;
       const loggedInSuccessefully = await this.$store.dispatch('wallet/walletRefresh', true);
       if(!loggedInSuccessefully) {
-        this.step = 2;
+        this.step = 1;
+        this.loading = false;
         return;
       }
 
@@ -816,6 +922,7 @@ export default Vue.extend({
           contractAddress: this.featureStatus?.forcedExitContractAddress as string,
           balances: this.choosedItems,
           target: this.address,
+          notFoundCount: 0
         });
 
         for (let a = 0; a < this.balancesList.length; a++) {

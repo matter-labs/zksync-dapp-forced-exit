@@ -4,8 +4,8 @@
       <span>{{ headline }}</span>
     </div>
     <checkmark />
+    <a v-if="txLink" :href="txLink" class="_display-block _text-center" target="_blank"> Link to the transaction <i class="fas fa-external-link"></i> </a>
     <slot />
-    <a v-if="txLink" :href="txLink" class="_display-block _text-center _margin-top-1" target="_blank"> Link to the transaction <i class="fas fa-external-link"></i> </a>
     <div v-if="recipient" class="infoBlockItem smaller _margin-top-2">
       <div class="amount">
         <span>Recipient:</span>
@@ -21,16 +21,6 @@
         {{ amount.amount | formatToken(amount.token.symbol) }}
         <span class="secondaryText">
           {{ amount.amount | formatUsdAmount(amount.token.tokenPrice, amount.token.symbol) }}
-        </span>
-      </div>
-    </div>
-    <div v-if="fee" class="infoBlockItem smaller _margin-top-1">
-      <div class="headline">Fee:</div>
-      <div class="amount">
-        <span class="tokenSymbol">{{ fee.token.symbol }}</span>
-        {{ fee.amount | formatToken(fee.token.symbol) }}
-        <span class="secondaryText">
-          {{ fee.amount | formatUsdAmount(fee.token.tokenPrice, fee.token.symbol) }}
         </span>
       </div>
     </div>
