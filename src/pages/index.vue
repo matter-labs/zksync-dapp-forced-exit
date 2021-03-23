@@ -95,20 +95,25 @@
                 </i-tooltip>
               </div>
             </div>
-
-            <div class="_text-center expectedInfo _display-block _margin-top-2">
-                Fee: ~{{ currentExpectedFee | formatToken('ETH') }} ETH
-                <span class="expectedPrice"><span class="">{{ currentExpectedFee | formatUsdAmount(tokenPricesMap['ETH'], 'ETH') }}</span></span>
+            <div :class="{'color-gray': choosedItems.length<=0 }">
+              <h4 class="_text-center">
+                Paying the fee
+              </h4>
+              <div class="_text-center expectedInfo _display-block _margin-top-0 _padding-05">
+                  In order to complete the withdrawal 
+                  <br>you need to pay the fee of 
+                  ~{{ currentExpectedFee | formatToken('ETH') }} ETH <span class="expectedPrice"><span class="">{{ currentExpectedFee | formatUsdAmount(tokenPricesMap['ETH'], 'ETH') }}</span></span>
+              </div>
+              <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">{{'Pay via wallet'}}</i-button>
+              <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Manually complete the withdrawal</i-button>
             </div>
-            <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-1" @click="withdraw()">{{loggedIn ? 'Withdraw with the wallet' : 'Connect wallet and Withdraw'}}</i-button>
-            <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Continue with the manual withdraw</i-button>
           </div>
           <div v-else-if="step===2">
             <p class="_text-left _margin-top-0">
               Your request was saved under <b>#ID-{{txID}}</b>.
               <div class="_margin-top-1">
                 Please send 
-                <br>exactly <b>{{currentWithdrawalFee}}</b> ETH
+                <br>exactly <b>{{currentWithdrawalFee}} ETH</b>
                 <i-tooltip trigger="click">
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(currentWithdrawalFee)"></i>
                   <template slot="body">Copied!</template>
@@ -119,7 +124,7 @@
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
-                within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+                <br/>within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
                 </div>
             </p>
             <p class="_text-left">
@@ -718,7 +723,6 @@ export default Vue.extend({
 
       try {
         const checkedFullfilled = await Promise.all(checkedFulfilledPromises);
-        console.log('checking ', checkedFullfilled);
         this.updateLocalStorage(checkedFullfilled);
       } catch (e) {
         console.warn(`An error while update occured: ${e.toString()}`);

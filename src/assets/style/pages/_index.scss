@@ -278,9 +278,9 @@
   font-size: 16px;
   transition: background-color $transition1, color $transition1;
   border-radius: 4px;
-  padding: 7px 10px;
+  padding: 7px 0px;
   box-sizing: border-box;
-  transform: translateX(-7px);
+  transform: translateX(0px);
   cursor: pointer;
 
   &:active {

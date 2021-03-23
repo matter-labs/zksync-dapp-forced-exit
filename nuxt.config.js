@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-const pageTitle = 'zksync.io Homepage'
+const pageTitle = 'zkSync Alternative Withdrawal'
 
 export default {
   ssr: false,

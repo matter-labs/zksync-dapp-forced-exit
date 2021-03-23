@@ -80,9 +80,7 @@ export default (ctx: any) => {
     popupContent: {
       dismiss: "Dismiss",
       teaser: "Can't find your wallet?",
-      fullHtml: `If you have funds in zkSync on an address that you can't control (a smart contract or an  exchange deposit account),
-        it is possible to initiate a forced withdrawal —&nbsp;<a href="${EXPLANATION_LINK}" target="_blank">please consult the documentation</a>.
-         In the future, this functionality will be automated.`,
+      fullHtml: `If you don't have a web3-compatible wallet, then you should complete the withdraw manually.`,
     },
   };
 };
