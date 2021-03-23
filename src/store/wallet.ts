@@ -96,7 +96,7 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
       await dispatch('restoreProviderConnection');
       const zksync = await walletData.zkSync();
       const syncProvider = walletData.get().syncProvider;
-      const syncWallet = await zksync.Wallet.fromEthSigner(ethWallet, syncProvider);
+      const syncWallet = await zksync.Wallet.fromEthSignerNoKeys(ethWallet, syncProvider);
 
       this.commit("account/setLoadingHint", "loadingData");
       const accountState = await syncWallet.getAccountState();

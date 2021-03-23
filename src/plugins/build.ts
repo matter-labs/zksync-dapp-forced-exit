@@ -5,6 +5,7 @@ const _ETHER_NETWORK_ID_DICTIONARY = {
   rinkeby: 4,
   ropsten: 3,
   mainnet: 1,
+  localhost: 9,
 } as networkIDS;
 
 export const GIT_REVISION_DATE = process.env.APP_GIT_UPDATED_AT;

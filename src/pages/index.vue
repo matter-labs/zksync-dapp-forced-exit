@@ -232,7 +232,7 @@ import Vue from "vue";
 
 import moment from "moment";
 import { BigNumber, BigNumberish } from "ethers";
-import { types as SyncTypes } from "zksync";
+import { types as SyncTypes, Provider, getDefaultProvider } from "zksync";
 import { Address, Balance } from "@/plugins/types";
 import { ETHER_NETWORK_NAME, APP_ETH_BLOCK_EXPLORER, APP_ZK_SCAN } from "@/plugins/build";
 
@@ -246,6 +246,7 @@ import successBlock from "@/components/SuccessBlock.vue";
 import headerComponent from "@/blocks/Header.vue";
 import footerComponent from "@/blocks/Footer.vue";
 import { walletData } from "~/plugins/walletData";
+import { Network } from "zksync/build/types";
 
 const FORCED_EXIT_API = "http://localhost:3001/api/forced_exit_requests/v0.1";
 
@@ -397,6 +398,7 @@ export default Vue.extend({
       subError: "",
       subErrorType: "None" as SubErrorType,
       tokenPricesMap: {} as TokenPricesMap,
+      provider: null as Provider|null, 
 
       /* Step 0 */
       address: "",
@@ -491,7 +493,9 @@ export default Vue.extend({
   },
   async created() {
     try {
-      /* this.featureStatus = await getStatus();
+      this.featureStatus = await getStatus();
+
+      console.log('f status', this.featureStatus);
 
       if (this.featureStatus.status === "enabled") {
         this.loading = false;
@@ -501,14 +505,8 @@ export default Vue.extend({
 
       setInterval(() => {
         this.checkFulfilled();
-      }, 1000); */
-      /* temp */ this.featureStatus = {
-        status: "enabled",
-        requestFee: "10000000",
-        maxTokensPerRequest: 2,
-        recomendedTxIntervalMillis: 1000,
-        forcedExitContractAddress: "0x2D9835a1C1662559975B00AEA00e326D1F9f13d0",
-      };
+      }, 1000);
+      
       const onboardResult = await this.$store.dispatch("wallet/onboard");
       if (onboardResult !== true) {
         await this.$store.dispatch("wallet/logout");
@@ -522,6 +520,13 @@ export default Vue.extend({
     }
   },
   methods: {
+    async getProvider() {
+      if(!this.provider) {
+        this.provider = await getDefaultProvider(ETHER_NETWORK_NAME as Network);
+      }
+
+      return this.provider;
+    },
     copyText(text: string) {
       const elem = document.createElement("textarea");
       elem.style.position = "absolute";
@@ -552,8 +557,8 @@ export default Vue.extend({
         // Note that we check if the request has been fulfilled even if it has expired
         // in order to take into account the fact that recommeneded time (displayed to the user)
         // is somewhat smaller than the real expiration time to take into account reorgs and the bad
-        // luck of the sender, etc
 
+        // luck of the sender, etc
         const requestStatus = await getRequest(request.id);
 
         if (requestStatus.fulfilledAt) {
@@ -628,40 +633,9 @@ export default Vue.extend({
       this.loading = true;
       try {
         const zksync = await walletData.zkSync();
-        const provider = await zksync.getDefaultProvider(ETHER_NETWORK_NAME /* , 'HTTP' */);
+        const provider = await this.getProvider();
         walletData.set({ syncProvider: provider });
-        /* const state = await provider.getState(this.address); */
-        /* temp */ const state = {
-          address: "0x2d9835a1c1662559975b00aea00e326d1f9f13d0",
-          id: 4731,
-          depositing: { balances: {} },
-          committed: {
-            balances: {
-              ZRX: "100000000000",
-              MLTT: "399001161349120",
-              DAI: "24152809973043131102",
-              ETH: "9928200003000000",
-              LAMB: "9935697869999999899",
-              USDC: "76631029",
-              USDT: "2316000",
-            },
-            nonce: 0,
-            pubKeyHash: "sync:6fd19a27cc94d18d9080da7a679f43d8b5b02feb",
-          },
-          verified: {
-            balances: {
-              ZRX: "100000000000",
-              ETH: "9928200003000000",
-              DAI: "24152809973043131102",
-              LAMB: "9935697869999999899",
-              MLTT: "399001161349120",
-              USDC: "76631029",
-              USDT: "2316000",
-            },
-            nonce: 0,
-            pubKeyHash: "sync:6fd19a27cc94d18d9080da7a679f43d8b5b02feb",
-          },
-        };
+        const state = await provider.getState(this.address);
 
         if (!state.id || state.id === -1) {
           this.setAccountDoesNotExistModal();
@@ -674,12 +648,11 @@ export default Vue.extend({
           return;
         }
 
-        /* temp */
-        /* const existedForEnoughTime = await checkEligibilty(this.address);
+        const existedForEnoughTime = await checkEligibilty(this.address);
         if (!existedForEnoughTime) {
           this.setTooYoungModal();
           return;
-        } */
+        }
 
         // A person might have a bunch of tokens, so it is better to fetch prices
         // in paralel
@@ -712,9 +685,9 @@ export default Vue.extend({
           this.balancesList.push({
             symbol,
             status: "Pending",
-            balance: amount,
+            balance: provider.tokenSet.formatToken(symbol, amount),
             rawBalance: BigNumber.from(amount),
-            verifiedBalance: amount,
+            verifiedBalance: provider.tokenSet.formatToken(symbol, amount),
             tokenPrice: tokenPrice.toString(),
             restricted: false,
             choosed: false,
@@ -754,12 +727,10 @@ export default Vue.extend({
     },
     async withdraw() {
       this.step = 3;
-      if(!this.loggedIn) {
-        const loggedInSuccessefully = await this.$store.dispatch('wallet/walletRefresh', true);
-        if(!loggedInSuccessefully) {
-          this.step = 2;
-          return;
-        }
+      const loggedInSuccessefully = await this.$store.dispatch('wallet/walletRefresh', true);
+      if(!loggedInSuccessefully) {
+        this.step = 2;
+        return;
       }
 
       this.tip = "Requesting withdraw...";
@@ -767,15 +738,18 @@ export default Vue.extend({
       if(!withdrawResponse) {
         this.tip = "";
         this.loading = false;
+        this.step = 2;
         return;
       }
 
       const ethWallet = walletData.get().ethWallet as any;
       this.tip = "Confirm the transaction to withdraw";
       try {
+        const value = BigNumber.from(withdrawResponse.priceInWei).add(withdrawResponse.id);
         const tx = await ethWallet.sendTransaction({
-          to: withdrawResponse.target,
-          value: BigNumber.from(withdrawResponse.priceInWei)
+          to: this.featureStatus?.forcedExitContractAddress,
+          value: value,
+          gasLimit: BigNumber.from('32000')
         });
         this.transactionInfo.hash = tx.hash;
         this.transactionInfo.explorerLink = APP_ETH_BLOCK_EXPLORER + "/tx/" + tx.hash;
@@ -783,7 +757,7 @@ export default Vue.extend({
         this.tip = "Waiting for the transaction to be mined...";
         const receipt = await tx.wait();
         this.transactionInfo.fee.token.tokenPrice = this.tokenPricesMap['ETH'];
-        this.transactionInfo.fee.amount = receipt.gasUsed.toString();
+        this.transactionInfo.fee.amount = '0';
 
         this.tip = "Processing...";
         this.checkFulfilled();
@@ -814,19 +788,10 @@ export default Vue.extend({
         const selectedTokens = this.balancesList.filter((token) => token.choosed).map((token) => walletData.get().syncProvider!.tokenSet.resolveTokenId(token.symbol) as number);
         const pricePerTokenStr = this.featureStatus?.requestFee as string;
         const pricePerToken = BigNumber.from(pricePerTokenStr);
-        /* temp */  //await this.updateStatus();
+        await this.updateStatus();
 
-        /* temp */ //const withdrawalReponse = (await submitRequest(this.address, selectedTokens, pricePerToken.mul(selectedTokens.length).toString())) as WithdrawalResponse;
-        /* temp */ const withdrawalReponse = {
-          id: 1,
-          target: "0x2D9835a1C1662559975B00AEA00e326D1F9f13d0",
-          tokens: selectedTokens,
-          priceInWei: "1000",
-          validUntil: "Mon Mar 22 2022 18:35:47 GMT+0100 (Central European Standard Time)",
-          createdAt: "Mon Mar 22 2022 18:35:47 GMT+0100 (Central European Standard Time)",
-          fulfilledBy: undefined,
-          fulfilledAt: undefined,
-        }
+        const withdrawalReponse = (await submitRequest(this.address, selectedTokens, pricePerToken.mul(selectedTokens.length).toString())) as WithdrawalResponse;
+
         console.log("respo", withdrawalReponse);
         this.txID = withdrawalReponse.id;
 
