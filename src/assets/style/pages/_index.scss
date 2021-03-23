@@ -10,7 +10,7 @@
   padding-bottom: 90px;
 
   // justify-content: center;
-  
+
   .questionMark {
     // top: 0px;
     // right: -33px;
@@ -28,7 +28,7 @@
   .bigText {
     font-size: 18px;
   }
-  
+
   .secondaryText {
     font-size: 15px;
   }
@@ -82,12 +82,12 @@
   //   //   margin-top: calc(40vh - 150px);
   //   // }
   // }
-  
+
   .formContainer {
     position: relative;
     width: 100%;
 
-    .loadingBlock {
+    .loaderBlock {
       z-index: 9;
       width: 102%;
       height: 102%;
@@ -105,7 +105,7 @@
     max-height: 100% !important;
     box-shadow: none !important;
     padding-bottom: 15px !important;
-  } 
+  }
 
   .balancesList, .transactionDetails {
     box-shadow: $shadowInset;
@@ -113,6 +113,7 @@
     background-color: #ffffff10;
     width: 100%;
     max-height: 30vh;
+    overflow: auto;
 
     &::-webkit-scrollbar {
       width: 10px;
@@ -156,7 +157,7 @@
 
         .checkboxContainer {
           border-color: $lightViolet;
-          
+
           i {
             opacity: 1;
           }
@@ -243,7 +244,7 @@
       .dropdownHeader {
         height: 69px;
         padding: 10px 20px;
-        
+
         .textContainer {
           font-size: 22px;
         }

@@ -6,7 +6,7 @@
         <template slot="header">How does this all work?</template>
         <div>
         <div>
-          <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets, 
+          <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
           so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client</a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
           <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
             <ul>
@@ -17,20 +17,29 @@
           <div>The amount to compensate is somewhat higher than the base fee due to technical reasons, but the overhead is negligible (less than 0.000001 ETH).</div>
         </div>
       </i-modal>
+      <i-modal v-model="manualWarningModal" size="md">
+        <template slot="header">Manual withdraw warning</template>
+        <div>
+          You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be fulfilled.
+          <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes my funds would be lost</i-checkbox>
+          <i-button block variant="secondary" :disabled="!manualWarningCheckmark" class="_margin-top-1" @click="manualWarningModal=false;withdrawManually()">Continue</i-button>
+          <i-button block link variant="secondary" class="_margin-top-05" @click="manualWarningModal=false">Cancel</i-button>
+        </div>
+      </i-modal>
       <div class="tileBlock">
         <div class="tileHeadline h3" :class="{'withBtn': step===1}">
-          <div class="returnBtn" v-if="step===1" @click="step=0">
+          <div v-if="step===1" class="returnBtn" @click="step=0">
               <i class="far fa-long-arrow-alt-left"></i>
           </div>
-          <div class="_margin-left-1">Alternative Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>  
+          <div class="_margin-left-1">Alternative Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>
         </div>
         <div class="formContainer">
           <transition name="fade">
-            <div v-if="loading" class="centerBlock loadingBlock">
+            <div v-if="loading" class="centerBlock loaderBlock">
               <loader/>
             </div>
           </transition>
-          <div class="_margin-top-2" v-if="step===0">
+          <div v-if="step===0" class="_margin-top-2">
             <address-input v-model="address" @change="setSubError"/>
             <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
               The provided account has done transactions on zkSync before.
@@ -45,19 +54,19 @@
             <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
               {{subError}}
             </div>
-            
+
             <i-button block sizemax="lg" variant="secondary" :disabled="!address" class="_margin-top-1" @click="checkAddress()">Continue</i-button>
           </div>
           <div v-else-if="step===-1 && modalParams.open">
             <p class="_text-center _margin-top-0">
               {{modalParams.message}}
             </p>
-            <p class="_text-center" v-if="modalParams.social">If you think this is a mistake, contact us by</p>
+            <p v-if="modalParams.social" class="_text-center">If you think this is a mistake, contact us by</p>
             <support-block v-if="modalParams.social" />
             <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
           <div v-else-if="step===1">
-            <i-input class="_margin-top-1" v-model="search" placeholder="Filter tokens" maxlength="6">
+            <i-input v-model="search" class="_margin-top-1" placeholder="Filter tokens" maxlength="6">
               <i slot="prefix" class="far fa-search"></i>
             </i-input>
             <div v-if="balancesList.length===0" class="centerBlock _margin-top-2">
@@ -68,8 +77,8 @@
             </div>
             <div v-else class="balancesList _margin-top-1">
               <div v-for="(item,index) in displayedList" :key="index">
-                <i-tooltip v-if="maxTokensReached && !item.choosed" class="witdth-100 height-60">
-                  <div class="no-padding balanceItem disabled">
+                <i-tooltip :disabled="!maxTokensReached || item.choosed" class="witdth-100 height-60">
+                  <div class="no-padding balanceItem cursor-pointer" :class="[(maxTokensReached && !item.choosed) ? 'disabled' : 'enabled', {'checked': item.choosed}]" @click="setItemChecked(item)">
                     <div class="leftSide">
                       <div class="checkboxContainer">
                         <i class="far fa-check"></i>
@@ -78,51 +87,68 @@
                     </div>
                     <div class="rightSide">
                       <div class="rowItem">
-                        <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
+                        <div class="total"><span class="balancePrice">{{ item.rawBalance | formatUsdAmount(item.tokenPrice, item.symbol) }}</span>&nbsp;&nbsp;{{ item.rawBalance | formatToken(item.symbol) }}</div>
                       </div>
                     </div>
-                  </div>  
+                  </div>
                   <template slot="body">Can't select more than {{featureStatus.maxTokensPerRequest}} tokens</template>
                 </i-tooltip>
-                <div v-else class="balanceItem cursor-pointer enabled" :class="{checked: item.choosed}" @click="setItemChecked(item)">
-                  <div class="leftSide">
-                    <div class="checkboxContainer">
-                      <i class="far fa-check"></i>
-                    </div>
-                    <div class="tokenSymbol">{{ item.symbol }}</div>
-                  </div>
-                  <div class="rightSide">
-                    <div class="rowItem">
-                      <div class="total"><span class="balancePrice">~${{ fixedPrice(item.balance*item.tokenPrice) }}</span>&nbsp;&nbsp;{{ item.balance }}</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
-            
-            <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-2" @click="withdraw()">Withdraw</i-button>
-            <div class="_text-center expectedInfo _display-block">
-                Fee: ~{{ currentExpectedFee }} ETH
-                <span class="expectedPrice"><span class="">~${{ fixedPrice(currentExpectedFee*tokenPricesMap['ETH']) }}</span></span>
+
+            <div class="_text-center expectedInfo _display-block _margin-top-2">
+                Fee: ~{{ currentExpectedFee | formatToken('ETH') }} ETH
+                <span class="expectedPrice"><span class="">{{ currentExpectedFee | formatUsdAmount(tokenPricesMap['ETH'], 'ETH') }}</span></span>
             </div>
+            <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-1" @click="withdraw()">{{loggedIn ? 'Withdraw with the wallet' : 'Connect wallet and Withdraw'}}</i-button>
+            <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Continue with the manual withdraw</i-button>
           </div>
           <div v-else-if="step===2">
-            <p class="_text-center _margin-top-0">
+            <p class="_text-left _margin-top-0">
               Your request was saved under <b>#ID-{{txID}}</b>.
-              <br>Please send exactly <b>{{currentWithdrawalFee}} ETH</b> 
-              <br>to the address <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> 
-              <br>within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+              <div class="_margin-top-1">
+                Please send 
+                <br>exactly <b>{{currentWithdrawalFee}}</b> ETH
+                <i-tooltip trigger="click">
+                  <i class="copy fas fa-copy _margin-left-05" @click="copyText(currentWithdrawalFee)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                <br>
+                to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b>
+                <i-tooltip trigger="click">
+                  <i class="copy fas fa-copy _margin-left-05" @click="copyText(featureStatus && featureStatus.forcedExitContractAddress)"></i>
+                  <template slot="body">Copied!</template>
+                </i-tooltip>
+                within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+                </div>
             </p>
-            <p class="_text-center">
-              The information about the withdrawal has been saved in the local browser storage. 
-              Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page. 
+            <p class="_text-left">
+              The information about the withdrawal has been saved in the local browser storage.
+              Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan</a> page.
               After the request is fulfilled, it may take up to 5 hours before the funds reach your L1 account.
             </p>
             <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
+          <loading-block v-else-if="step===3">
+            <a v-if="transactionInfo.hash" class="_display-block _text-center" target="_blank"
+              :href="transactionInfo.explorerLink">
+              Link to the transaction <i class="fas fa-external-link"/>
+            </a>
+            <p v-if="loggingIn" class="_display-block _text-center">
+              <span v-if="loggingInHint === 'followInstructions'">Follow the instructions in your wallet</span>
+              <span v-else-if="loggingInHint === 'loadingData'">Getting wallet information</span>
+            </p>
+            <p v-else-if="tip" class="_display-block _text-center">{{ tip }}</p>
+          </loading-block>
+          <success-block v-else-if="step===4" :tx-link="transactionInfo.explorerLink" :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
+            <p class="_text-left _margin-top-1">
+              The server will wait for up to 10 confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
+              <p> The information about the request with <b>#ID-{{txID}}</b> was saved in the browser storage. You may track the progress there.</p>
+            </p>
+          </success-block>
         </div>
       </div>
-      <div class="dropdownsContainer" v-if="step===0">
+      <div v-if="step===0" class="dropdownsContainer">
         <dropdown v-for="(item, index) in requestsList" :key="index">
           <template slot="header">
             <span>
@@ -180,7 +206,10 @@
                 <div class="_margin-top-1 ">Tokens:</div>
                 <div :class="{'_margin-top-1': index!=0} " v-for="(balance, index) in item.balances" :key="index" >
                   All of <b>{{balance.symbol}}</b>
-                  <br>Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
+                    <span v-if="!item.fulfilledBy">
+                      <br>
+                      Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
+                    </span>
                 </div>
               </div>
             </div>
@@ -194,73 +223,132 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import Vue from "vue";
 
 import moment from "moment";
-import { BigNumber, BigNumberish } from 'ethers'
-import { getDefaultProvider, Provider, types as SyncTypes } from 'zksync';
-import { Address, Balance } from '@/plugins/types'
+import { BigNumber, BigNumberish } from "ethers";
+import { types as SyncTypes, Provider, getDefaultProvider } from "zksync";
+import { Address, Balance } from "@/plugins/types";
+import { ETHER_NETWORK_NAME, APP_ETH_BLOCK_EXPLORER, APP_ZK_SCAN } from "@/plugins/build";
 
 import utils from "@/plugins/utils";
 import supportBlock from "@/blocks/SupportBlock.vue";
 import addressInput from "@/components/AddressInput.vue";
 import dropdown from "@/components/DropdownBlock.vue";
 import timeTicker from "@/components/TimeTicker.vue";
-import logo from "@/blocks/Logo.vue";
+import loadingBlock from "@/components/LoadingBlock.vue";
+import successBlock from "@/components/SuccessBlock.vue";
 import headerComponent from "@/blocks/Header.vue";
 import footerComponent from "@/blocks/Footer.vue";
+import { walletData } from "~/plugins/walletData";
+import { Network } from "zksync/build/types";
 
-const ZKSCAN_ADDRESS = 'http://localhost:7000';
-const NETWORK = 'localhost';
-const FORCED_EXIT_API = 'http://localhost:3001/api/forced_exit_requests/v0.1';
+const FORCED_EXIT_API = "http://localhost:3001/api/forced_exit_requests/v0.1";
 
-const UNAVALIABLE_MESSAGE = 'Sorry, the automated forced exit procedure is unavailable now. In case of any inconvenience contact us by';
+const UNAVALIABLE_MESSAGE = "Sorry, the automated forced exit procedure is unavailable now. In case of any inconvenience contact us by";
 
 interface StatusResponse {
-    status: 'enabled' | 'disabled';
-    requestFee: string;
-    maxTokensPerRequest: number;
-    recomendedTxIntervalMillis: number;
-    forcedExitContractAddress: Address;
+  status: "enabled" | "disabled";
+  requestFee: string;
+  maxTokensPerRequest: number;
+  recomendedTxIntervalMillis: number;
+  forcedExitContractAddress: Address;
 }
+
+interface RequestStatusResponse {
+  id: number;
+  target: string;
+  tokens: number[];
+  priceInWei: string;
+  validUntil: string;
+  createdAt: string;
+  fulfilledBy: string[] | null;
+  fulfilledAt: string | null;
+}
+
+interface requestType {
+  id: number;
+  createdAt: number;
+  sendUntil: number;
+  target: string;
+  token: {
+    amount: string;
+    symbol: string;
+  };
+  contractAddress: string;
+  balances: Array<Balance>;
+  fulfilledBy?: string[];
+  // Number of times we tried to query for the status, but 404 was returned
+  notFoundCount: number;
+}
+
+interface WithdrawalResponse {
+  id: number;
+  target: SyncTypes.Address;
+  tokens: number[];
+  priceInWei: string;
+  // Date objects are json since it is how
+  // the `.json()` deserializes them
+  validUntil: string;
+  createdAt: string;
+  fulfilledBy?: string[];
+  fulfilledAt?: string;
+}
+
+interface ModalParams {
+  // If the open is open or not
+  open: boolean;
+  // What message is displayed
+  message: string;
+  // Are there any social links
+  social: boolean;
+  // If it is possible to close the modal
+  closable: boolean;
+}
+
+interface TokenPricesMap {
+  [key: string]: number;
+}
+
+type SubErrorType = "Active" | "NotExists" | "TooYoung" | "None" | "Other";
 
 function getEndpoint(endpoint: string) {
   return FORCED_EXIT_API + endpoint;
 }
 
 async function getStatus() {
-    const endpoint = getEndpoint('/status');
-    const response = await fetch(endpoint);
+  const endpoint = getEndpoint("/status");
+  const response = await fetch(endpoint);
 
-    const json = await response.json();
-    return json as StatusResponse;
+  const json = await response.json();
+  return json as StatusResponse;
 }
 
-async function submitRequest(address: string, tokens: number[], price_in_wei: BigNumberish) {
-    const endpoint = getEndpoint('/submit');
+async function submitRequest(address: string, tokens: number[], priceInWei: BigNumberish) {
+  const endpoint = getEndpoint("/submit");
 
-    const data = {
-        target: address,
-        tokens,
-        price_in_wei: price_in_wei.toString()
-    };
+  const data = {
+    target: address,
+    tokens,
+    price_in_wei: priceInWei.toString(),
+  };
 
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        redirect: 'follow',
-        body: JSON.stringify(data)
-    });
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    redirect: "follow",
+    body: JSON.stringify(data),
+  });
 
-    const json = await response.json();
+  const json = await response.json();
 
-    if (response.status < 200 || response.status > 299) {
-      throw new Error(json.title);
-    }
+  if (response.status < 200 || response.status > 299) {
+    throw new Error(json.title);
+  }
 
-    return json;
+  return json;
 }
 
 async function checkEligibilty(address: string): Promise<boolean> {
@@ -268,7 +356,7 @@ async function checkEligibilty(address: string): Promise<boolean> {
 
   const response = await fetch(endpoint);
 
-  const responseObj = await response.json(); 
+  const responseObj = await response.json();
 
   return responseObj.eligible;
 }
@@ -288,62 +376,6 @@ async function getRequest(id: number): Promise<RequestStatusResponse | null> {
   return response as RequestStatusResponse;
 }
 
-interface RequestStatusResponse {
-  id: number,
-  target: string,
-  tokens: number[],
-  priceInWei: string,
-  validUntil: string,
-  createdAt: string,
-  fulfilledBy: string[]|null,
-  fulfilledAt: string|null
-}
-
-interface requestType {
-  id: number,
-  createdAt: number,
-  sendUntil: number,
-  notFoundCount: number,
-  target: string,
-  token: {
-    amount: string,
-    symbol: string
-  },
-  contractAddress: string,
-  balances: Array<Balance>,
-  fulfilledBy?: string[],
-}
-
-interface WithdrawalResponse {
-    id: number,
-    target: SyncTypes.Address,
-    tokens: number[],
-    priceInWei: string,
-    // Date objects are json since it is how
-    // the `.json()` deserializes them
-    validUntil: string,
-    createdAt: string,
-    fulfilledBy?: string[],
-    fulfilledAt?: string,
-}
-
-interface ModalParams {
-  // If the open is open or not
-  open: boolean,
-  // What message is displayed
-  message: string,
-  // Are there any social links 
-  social: boolean,
-  // If it is possible to close the modal
-  closable: boolean
-}
-
-interface TokenPricesMap {
-  [key: string]: number
-}
-
-type SubErrorType = 'Active' | 'NotExists' | 'TooYoung' | 'None' | 'Other';
-
 export default Vue.extend({
   components: {
     addressInput,
@@ -352,66 +384,95 @@ export default Vue.extend({
     supportBlock,
     headerComponent,
     footerComponent,
-    logo
+    loadingBlock,
+    successBlock,
   },
   layout: "index",
   data() {
     return {
       step: 0,
       loading: true,
-      provider: null as Provider|null,
-      featureStatus: null as StatusResponse|null,
+      featureStatus: null as StatusResponse | null,
       modalParams: {
         open: false,
-        message: '',
+        message: "",
         social: false,
-        closable: false
+        closable: false,
       } as ModalParams,
-      subError: '',
-      subErrorType: 'None' as SubErrorType,
+      subError: "",
+      subErrorType: "None" as SubErrorType,
       tokenPricesMap: {} as TokenPricesMap,
+      provider: null as Provider|null, 
       cachedState: new Map<string, SyncTypes.AccountState>(),
 
       /* Step 0 */
-      address: '',
+      address: "",
       howThisWorksModal: false,
-      
+
       /* Step 1 */
-      search: '',
+      search: "",
       balancesList: [] as Array<Balance>,
       forceUpdateVal: 0,
       forceUpdateRequestsVal: 0,
+      manualWarningModal: false,
+      manualWarningCheckmark: false,
 
       /* Step 2 */
       txID: 0,
-      currentWithdrawalFee: ''
+      currentWithdrawalFee: "",
+
+      /* Step 4 */
+      tip: "",
+      transactionInfo: {
+        hash: "",
+        explorerLink: "",
+        fee: {
+          token: {
+            symbol: "ETH",
+            tokenPrice: 1,
+          },
+          amount: "0"
+        },
+      },
     };
   },
   computed: {
-    addressZkScanLink: function(): string {
-      return `${ZKSCAN_ADDRESS}/accounts/${this.address}`;
+    loggedIn(): boolean {
+      return this.$store.getters["account/loggedIn"];
     },
-    maxTokensReached: function(): boolean {
+    loggingIn(): boolean {
+      return this.$store.getters["account/loader"];
+    },
+    loggingInHint(): string {
+      return this.$store.getters["account/loadingHint"];
+    },
+    addressZkScanLink(): string {
+      return `${APP_ZK_SCAN}/accounts/${this.address}`;
+    },
+    maxTokensReached(): boolean {
       return this.choosedItems.length >= this.featureStatus!.maxTokensPerRequest;
     },
-    currentExpectedFee: function(): string {
+    currentExpectedFee(): BigNumberish {
       const feeForOneRequest = BigNumber.from(this.featureStatus?.requestFee);
       const expectedFee = feeForOneRequest.mul(this.choosedItems.length);
-
-      return this.provider!.tokenSet.formatToken('ETH', expectedFee.toString());
+      return expectedFee;
     },
 
-    requestsList: function(): Array<requestType> {
+
+    requestsList(): Array<requestType> {
+      // eslint-disable-next-line no-unused-expressions
       this.forceUpdateRequestsVal;
       return this.getItemsFromStorage();
     },
 
     /* Step 1 */
-    choosedItems: function (): Array<Balance> {
+    choosedItems(): Array<Balance> {
+      // eslint-disable-next-line no-unused-expressions
       this.forceUpdateVal;
-      return this.balancesList.filter((e: Balance) => e.choosed===true);
+      return this.balancesList.filter((e: Balance) => e.choosed === true);
     },
-    displayedList: function (): Array<Balance> {
+    displayedList(): Array<Balance> {
+      // eslint-disable-next-line no-unused-expressions
       this.forceUpdateVal;
       if (!this.search.trim()) {
         return this.balancesList;
@@ -422,30 +483,60 @@ export default Vue.extend({
     waitTime(): string {
       const timeSeconds = this.featureStatus!.recomendedTxIntervalMillis / 1000;
       const { hours, minutes } = utils.timeCalc(timeSeconds);
-      
+
       if (minutes) {
         return `${hours} hours and ${minutes} minutes`;
       } else {
         return `${hours} hours`;
       }
+    },
+  },
+  watch: {
+    manualWarningModal() {
+      this.manualWarningCheckmark=false;
     }
   },
   async created() {
-    this.featureStatus = await getStatus();
+    try {
+      this.featureStatus = await getStatus();
 
-    if (this.featureStatus.status == 'enabled') {
-      this.loading = false;
-    } else {
-      this.setUnavaliabeModal();
-    }
+      console.log('f status', this.featureStatus);
 
-    const updateFulfilledInterval = setInterval(() => {
+      if (this.featureStatus.status === "enabled") {
+        this.loading = false;
+      } else {
+        this.setUnavaliabeModal();
+      }
+      
+      setInterval(() => {
         this.updateCachedAccountStates();
         this.checkFulfilled();
         this.setTokenPrices();
-    }, 1000);
+      }, 1000);
+      
+      const onboardResult = await this.$store.dispatch("wallet/onboard");
+      if (onboardResult !== true) {
+        await this.$store.dispatch("wallet/logout");
+        return;
+      }
+    } catch (error) {
+      console.log("Can't get platform status", error);
+      this.setUnavaliabeModal();
+    } finally {
+      this.loading = false;
+    }
   },
   methods: {
+    async getProvider() {
+      if(!this.provider) {
+        this.provider = await getDefaultProvider(ETHER_NETWORK_NAME as Network);
+      }
+
+      return this.provider;
+    },
+    copyText(text: string) {
+    
+  },
     copyValue(value: string) {
       const elem = document.createElement("textarea");
       elem.style.position = "absolute";
@@ -498,7 +589,7 @@ export default Vue.extend({
       this.howThisWorksModal = !this.howThisWorksModal;
     },
     zkscanLinkToTx(hash: string) {
-      return `${ZKSCAN_ADDRESS}/transactions/${hash}`;
+      return `${APP_ZK_SCAN}/transactions/${hash}`;
     },
     updateBalancesInLocalStorage(requests: requestType[]) {
       const newRequests = requests.map((request) => {
@@ -543,7 +634,7 @@ export default Vue.extend({
       // Here we check for each request if it has been fulfilled
       const checkedFulfilledPromises = requests.map(async (request) => {
         // If it has been already fulfilled, no need to check it again
-        if(request.fulfilledBy) {
+        if (request.fulfilledBy) {
           return request;
         }
 
@@ -556,14 +647,14 @@ export default Vue.extend({
         // Note that we check if the request has been fulfilled even if it has expired 
         // in order to take into account the fact that recommeneded time (displayed to the user)
         // is somewhat smaller than the real expiration time to take into account reorgs and the bad
-        // luck of the sender, etc
 
+        // luck of the sender, etc
         const requestStatus = await getRequest(request.id);
 
         if (requestStatus?.fulfilledAt) {
           return {
             ...request,
-            fulfilledBy: requestStatus.fulfilledBy
+            fulfilledBy: requestStatus.fulfilledBy,
           } as requestType;
         } else {
           // Basically if the result was 404, then we should add to a count
@@ -581,7 +672,7 @@ export default Vue.extend({
       try {
         const checkedFullfilled = await Promise.all(checkedFulfilledPromises);
         this.updateLocalStorage(checkedFullfilled);
-      } catch(e) {
+      } catch (e) {
         console.warn(`An error while update occured: ${e.toString()}`);
       }
     },
@@ -593,45 +684,49 @@ export default Vue.extend({
       return price.toFixed(2);
     },
     hasExpired(request: requestType) {
-      const timeLeft = (request.sendUntil-(new Date()).getTime())/1000;
+      const timeLeft = (request.sendUntil - new Date().getTime()) / 1000;
       return timeLeft <= 0;
     },
-    getFormattedTime: function (time: number): string {
+    getFormattedTime(time: number): string {
       return moment(time).format("M/D/YYYY h:mm:ss A");
     },
-    getItemsFromStorage: function(): Array<requestType> {
-      var data = localStorage.getItem('forcedExitRequests');
+    getItemsFromStorage(): Array<requestType> {
+      let data = localStorage.getItem("forcedExitRequests");
       try {
-        if(!data) {
-          return []
+        if (!data) {
+          return [];
         }
         data = JSON.parse(data);
-        if(!Array.isArray(data)) {return []}
+        if (!Array.isArray(data)) {
+          return [];
+        }
       } catch (error) {
-        return []
+        return [];
       }
       return data.sort((a, b) => b.createdAt - a.createdAt);
     },
-    saveToLocalStorage: function(tx: requestType) {
-      var newData = this.getItemsFromStorage();
+    getItemFromStorageById(id: number): (false | requestType) {
+      const allRequests = this.getItemsFromStorage();
+      for(const request of allRequests) {
+        if(request?.id === id) {
+          return request;
+        }
+      }
+      return false;
+    },
+    saveToLocalStorage(tx: requestType) {
+      const newData = this.getItemsFromStorage();
       newData.push(tx);
       this.updateLocalStorage(newData);
     },
     removeFromLocalStorage(request: requestType) {
-      var newData = this.getItemsFromStorage();
-      newData = newData.filter((r) => r.id != request.id);
+      let newData = this.getItemsFromStorage();
+      newData = newData.filter((r) => r.id !== request.id);
       this.updateLocalStorage(newData);
     },
-    updateLocalStorage: function(txs: requestType[]) {
-      localStorage.setItem('forcedExitRequests', JSON.stringify(txs));
+    updateLocalStorage(txs: requestType[]) {
+      localStorage.setItem("forcedExitRequests", JSON.stringify(txs));
       this.forceUpdateRequestsVal++;
-    },
-
-    async getProvider() {
-      if(!this.provider) {
-        this.provider = await getDefaultProvider(NETWORK);
-      } 
-      return this.provider;
     },
 
     async updateStatus() {
@@ -639,20 +734,21 @@ export default Vue.extend({
     },
 
     /* Step 0 */
-    checkAddress: async function() {
-      this.loading=true;
+    async checkAddress() {
+      this.loading = true;
       try {
-
+        const zksync = await walletData.zkSync();
         const provider = await this.getProvider();
+        walletData.set({ syncProvider: provider });
         const state = await provider.getState(this.address);
 
         if (!state.id || state.id === -1) {
           this.setAccountDoesNotExistModal();
           return;
-        } 
+        }
 
         if (state.committed.nonce) {
-          //this.subError = 'bad noce';
+          // this.subError = 'bad noce';
           this.setNonceModal();
           return;
         }
@@ -663,10 +759,10 @@ export default Vue.extend({
           return;
         }
 
-        // A person might have a bunch of tokens, so it is better to fetch prices 
+        // A person might have a bunch of tokens, so it is better to fetch prices
         // in paralel
         const tokenPricesPromises = Object.keys(state.committed.balances).map(async (token) => ({
-          [token]: await provider.getTokenPrice(token)
+          [token]: await provider!.getTokenPrice(token),
         }));
         const tokenPricesArray = await Promise.all(tokenPricesPromises);
 
@@ -678,11 +774,11 @@ export default Vue.extend({
 
         const tokenPricesObj = tokenPricesArray.reduce((prev, cur) => ({
           ...prev,
-          ...cur
+          ...cur,
         }));
 
-        if(!tokenPricesObj['ETH']) {
-          tokenPricesObj['ETH'] = await this.provider!.getTokenPrice('ETH');
+        if (!tokenPricesObj.ETH) {
+          tokenPricesObj.ETH = await walletData.get().syncProvider!.getTokenPrice("ETH");
         }
 
         this.tokenPricesMap = tokenPricesObj;
@@ -690,18 +786,18 @@ export default Vue.extend({
         this.balancesList = [];
         Object.entries(state.committed.balances).forEach(([symbol, amount]) => {
           const tokenPrice = tokenPricesObj[symbol] as number;
-          
+
           this.balancesList.push({
             symbol,
             status: "Pending",
-            balance: provider.tokenSet.formatToken(symbol, amount.toString()),
+            balance: provider.tokenSet.formatToken(symbol, amount),
             rawBalance: BigNumber.from(amount),
-            verifiedBalance: provider.tokenSet.formatToken(symbol, amount.toString()),
+            verifiedBalance: provider.tokenSet.formatToken(symbol, amount),
             tokenPrice: tokenPrice.toString(),
             restricted: false,
             choosed: false,
           });
-        }); 
+        });
 
         this.balancesList.sort((balance1, balance2) => {
           if (balance1.symbol < balance2.symbol) {
@@ -711,90 +807,144 @@ export default Vue.extend({
           }
         });
 
-        this.step=1;
+        this.step = 1;
       } catch (error) {
-        console.log('an error handled: ', error);
+        console.log("an error handled: ", error);
         const errorStr = error?.toString();
         this.setErrorModal(errorStr);
       } finally {
-        this.loading=false;
+        this.loading = false;
       }
     },
-    
+
     /* Step 1 */
-    setItemChecked: function(item: Balance) {
-      for(let a=0; a<this.balancesList.length; a++) {
-        if(this.balancesList[a].symbol===item.symbol) {
-          this.balancesList[a] = {...this.balancesList[a], choosed: !this.balancesList[a].choosed}
+    setItemChecked(item: Balance) {
+      for (let a = 0; a < this.balancesList.length; a++) {
+        if (this.balancesList[a].symbol === item.symbol) {
+          if(!this.balancesList[a].choosed && this.maxTokensReached) {
+            break;
+          }
+          this.balancesList[a] = { ...this.balancesList[a], choosed: !this.balancesList[a].choosed };
           this.forceUpdateVal++;
           break;
         }
       }
     },
-    withdraw: async function() {
-      this.loading=true;
+    async withdraw() {
+      this.step = 3;
+      const loggedInSuccessefully = await this.$store.dispatch('wallet/walletRefresh', true);
+      if(!loggedInSuccessefully) {
+        this.step = 1;
+        this.loading = false;
+        return;
+      }
 
-      const selectedTokens = this.balancesList
-        .filter((token) => token.choosed)
-        .map((token) => this.provider?.tokenSet.resolveTokenId(token.symbol) as number);
-      
-      const pricePerTokenStr = this.featureStatus?.requestFee as string;
-      const pricePerToken = BigNumber.from(pricePerTokenStr);
+      this.tip = "Requesting withdraw...";
+      const withdrawResponse = await this.withdrawRequest();
+      if(!withdrawResponse) {
+        this.tip = "";
+        this.loading = false;
+        this.step = 2;
+        return;
+      }
 
+      const ethWallet = walletData.get().ethWallet as any;
+      this.tip = "Confirm the transaction to withdraw";
       try {
+        const value = BigNumber.from(withdrawResponse.priceInWei).add(withdrawResponse.id);
+        const tx = await ethWallet.sendTransaction({
+          to: this.featureStatus?.forcedExitContractAddress,
+          value: value,
+          gasLimit: BigNumber.from('32000')
+        });
+        this.transactionInfo.hash = tx.hash;
+        this.transactionInfo.explorerLink = APP_ETH_BLOCK_EXPLORER + "/tx/" + tx.hash;
+
+        this.tip = "Waiting for the transaction to be mined...";
+        const receipt = await tx.wait();
+        this.transactionInfo.fee.token.tokenPrice = this.tokenPricesMap['ETH'];
+        this.transactionInfo.fee.amount = '0';
+
+        this.tip = "Processing...";
+        this.checkFulfilled();
+
+        this.tip = "";
+        this.step = 4;
+      } catch (error) {
+        console.log('Tx error', error);
+        this.step = 2;
+      }
+      this.loading = false;
+    },
+    withdrawManuallyAsk() {
+      this.manualWarningModal=true;
+    },
+    async withdrawManually() {
+      this.loading = true;
+      const withdrawResponse = await this.withdrawRequest();
+      if(!withdrawResponse) {
+        this.loading = false;
+        return;
+      }
+      this.step = 2;
+      this.loading = false;
+    },
+    async withdrawRequest() {
+      try {
+        const selectedTokens = this.balancesList.filter((token) => token.choosed).map((token) => walletData.get().syncProvider!.tokenSet.resolveTokenId(token.symbol) as number);
+        const pricePerTokenStr = this.featureStatus?.requestFee as string;
+        const pricePerToken = BigNumber.from(pricePerTokenStr);
         await this.updateStatus();
 
-        const withdrawalReponse = await submitRequest(
-          this.address,
-          selectedTokens,
-          pricePerToken.mul(selectedTokens.length).toString()
-        ) as WithdrawalResponse;
-        this.txID=withdrawalReponse.id;
-        this.step=2;
-    
+        const withdrawalReponse = (await submitRequest(this.address, selectedTokens, pricePerToken.mul(selectedTokens.length).toString())) as WithdrawalResponse;
 
-        const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID)
+        console.log("respo", withdrawalReponse);
+        this.txID = withdrawalReponse.id;
 
-        this.currentWithdrawalFee = this.provider?.tokenSet.formatToken("ETH", amountToSend) as string;
+        const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID);
 
-        const createdAt = (new Date(withdrawalReponse.createdAt)).getTime();
-        const recommendedValidUntil = (new Date(createdAt + this.featureStatus!.recomendedTxIntervalMillis)).getTime();
-        const validUntil = (new Date(withdrawalReponse.validUntil)).getTime();
+        this.currentWithdrawalFee = walletData.get().syncProvider!.tokenSet.formatToken("ETH", amountToSend) as string;
+
+        const createdAt = new Date(withdrawalReponse.createdAt).getTime();
+        const recommendedValidUntil = new Date(createdAt + this.featureStatus!.recomendedTxIntervalMillis).getTime();
+        const validUntil = new Date(withdrawalReponse.validUntil).getTime();
 
         const sendUntil = Math.min(recommendedValidUntil, validUntil);
 
         this.saveToLocalStorage({
-          id: this.txID, 
-          createdAt, 
+          id: this.txID,
+          createdAt,
           token: {
             amount: this.currentWithdrawalFee,
-            symbol: "ETH"
-          }, 
-          sendUntil, 
+            symbol: "ETH",
+          },
+          sendUntil,
           contractAddress: this.featureStatus?.forcedExitContractAddress as string,
           balances: this.choosedItems,
           target: this.address,
           notFoundCount: 0
         });
 
-        for(let a=0; a<this.balancesList.length; a++) {
-          this.balancesList[a] = {...this.balancesList[a], choosed: false}
+        for (let a = 0; a < this.balancesList.length; a++) {
+          this.balancesList[a] = { ...this.balancesList[a], choosed: false };
         }
-      } catch(err) {
+
+        this.forceUpdateVal++;
+        this.search = "";
+
+        return withdrawalReponse;
+      } catch (err) {
         this.setErrorModal(err);
         this.step = -1;
-        this.address='';
-      } finally {
-        this.forceUpdateVal++;
-        this.search='';
-        this.loading=false;
+        this.address = "";
+        return false;
       }
     },
 
     /* Step 2 */
-    finish: function() {
-      this.address='';
-      this.step=0;
+    finish() {
+      this.address = "";
+      this.step = 0;
     },
 
     removeModal() {
@@ -802,7 +952,7 @@ export default Vue.extend({
     },
 
     setUnavaliabeModal() {
-      this.step= -1;
+      this.step = -1;
       this.modalParams = {
         open: true,
         message: UNAVALIABLE_MESSAGE,
@@ -812,7 +962,7 @@ export default Vue.extend({
     },
 
     setErrorModal(err: any) {
-      this.step= -1;
+      this.step = -1;
 
       this.modalParams = {
         open: true,
@@ -822,34 +972,38 @@ export default Vue.extend({
       };
     },
 
-
     setSubError(err: any) {
-      if(!err) {
+      if (!err) {
         this.removeError();
       } else {
-        this.subErrorType = 'Other';
+        this.subErrorType = "Other";
         this.subError = err.toString();
       }
-    },  
+    },
 
     setTooYoungModal() {
-        this.subErrorType = 'TooYoung';
-        this.subError = '';
+      this.subErrorType = "TooYoung";
+      this.subError = "";
     },
 
     setNonceModal() {
-      this.subErrorType = 'Active';
-      this.subError = 'The account that had any activity on zkSync can only use the wallet to withdraw';
+      this.subErrorType = "Active";
+      this.subError = "The account that had any activity on zkSync can only use the wallet to withdraw";
     },
 
     setAccountDoesNotExistModal() {
-      this.subErrorType = 'NotExists';
-      this.subError = 'The account does not exist in the zkSync network';
+      this.subErrorType = "NotExists";
+      this.subError = "The account does not exist in the zkSync network";
     },
 
-    removeError(){
-      this.subError = '';
-      this.subErrorType = 'None';
+    removeError() {
+      this.subError = "";
+      this.subErrorType = "None";
+    },
+
+    /* Step 4 */
+    successBlockContinue() {
+      this.step = 0;
     }
   },
 });

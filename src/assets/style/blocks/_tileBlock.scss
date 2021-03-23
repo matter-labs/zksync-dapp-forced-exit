@@ -7,7 +7,6 @@
     margin-left: auto;
     margin-right: auto;
     transition: background-color $transition1;
-    box-shadow: 4px 4px 8px 0 rgba(11, 52, 102, 0.12);
     border-radius: 10px;
 
     .tileHeadline {
@@ -107,16 +106,16 @@
 }
 
 body.inkline.-light .defaultLayout {
-    .tileBlock,.loadingBlock {
+    .tileBlock,.loaderBlock {
         background: $white;
     }
     .tileBlock .tileHeadline .returnBtn i {
         color: $black;
     }
 }
-  
+
 body.inkline.-dark .defaultLayout {
-    .tileBlock,.loadingBlock {
+    .tileBlock,.loaderBlock {
         background: $darkViolet;
     }
     .tileBlock .tileHeadline .returnBtn i {

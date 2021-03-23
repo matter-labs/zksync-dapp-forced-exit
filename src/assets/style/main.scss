@@ -12,6 +12,8 @@
 @import "./blocks/cookie.scss";
 @import "./blocks/tileBlock.scss";
 @import "./blocks/socialBlock.scss";
+@import "./blocks/onboard.scss";
+@import "./blocks/loggingInLoader.scss";
 @import "./blocks/header.scss";
 @import "./blocks/footer.scss";
 
@@ -20,6 +22,9 @@
 @import "./components/dropdownBlock.scss";
 @import "./components/userImg.scss";
 @import "./components/walletAddress.scss";
+@import "./components/successBlock.scss";
+@import "./components/loadingBlock.scss";
+@import "./components/checkmark.scss";
 
 //Pages
 @import "./pages/index.scss";

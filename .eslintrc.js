@@ -80,5 +80,7 @@ module.exports = {
         tabWidth: 2,
       },
     ],
+    "no-unused-vars": "warning",
+    "@typescript-eslint/no-unused-vars": ["warning"],
   },
 };
