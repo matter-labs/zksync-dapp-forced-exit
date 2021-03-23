@@ -113,13 +113,13 @@
                 Please send 
                 <br>exactly <b>{{currentWithdrawalFee}}</b> ETH
                 <i-tooltip trigger="click">
-                  <i class="copy fas fa-copy _margin-left-05" @click="copyText(currentWithdrawalFee)"></i>
+                  <i class="copy fas fa-copy _margin-left-05" @click="copyValue(currentWithdrawalFee)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
                 <br>
                 to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b>
                 <i-tooltip trigger="click">
-                  <i class="copy fas fa-copy _margin-left-05" @click="copyText(featureStatus && featureStatus.forcedExitContractAddress)"></i>
+                  <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
                 within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
@@ -447,6 +447,13 @@ export default Vue.extend({
       },
     };
   },
+  asyncData({route}) {
+    if(route.query.address) {
+      return {
+        address: route.query.address
+      }
+    }
+  },
   computed: {
     loggedIn(): boolean {
       return this.$store.getters["account/loggedIn"];
@@ -510,9 +517,8 @@ export default Vue.extend({
   async created() {
     try {
       this.featureStatus = await getStatus();
-      console.log('confirmations', this.featureStatus.waitConfirmations);
 
-      console.log('f status', this.featureStatus);
+      console.log('featureStatus', this.featureStatus);
 
       if (this.featureStatus.status === "enabled") {
         this.loading = false;
@@ -561,9 +567,6 @@ export default Vue.extend({
 
       return this.provider;
     },
-    copyText(text: string) {
-    
-  },
     copyValue(value: string) {
       const elem = document.createElement("textarea");
       elem.style.position = "absolute";
@@ -886,7 +889,7 @@ export default Vue.extend({
         const tx = await ethWallet.sendTransaction({
           to: this.featureStatus?.forcedExitContractAddress,
           value: value,
-          gasLimit: BigNumber.from('32000')
+          gasLimit: BigNumber.from('35000')
         });
         this.setWalletTx(withdrawResponse.id, tx.hash);
         this.transactionInfo.hash = tx.hash;
