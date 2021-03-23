@@ -100,9 +100,6 @@
                 Fee: ~{{ currentExpectedFee | formatToken('ETH') }} ETH
                 <span class="expectedPrice"><span class="">{{ currentExpectedFee | formatUsdAmount(tokenPricesMap['ETH'], 'ETH') }}</span></span>
             </div>
-            <div v-if="choosedItems.length>0" class="_text-center tinyText">
-              The actual fee is a little higher, but no more than by $0.01  
-            </div>
             <i-button block size="lg" variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-1" @click="withdraw()">{{loggedIn ? 'Withdraw with the wallet' : 'Connect wallet and Withdraw'}}</i-button>
             <i-button block link variant="secondary" :disabled="choosedItems.length<=0" class="_margin-top-05" @click="withdrawManuallyAsk()">Continue with the manual withdraw</i-button>
           </div>
@@ -883,14 +880,17 @@ export default Vue.extend({
       }
 
       const ethWallet = walletData.get().ethWallet as any;
+      const provider = await this.getProvider();
       this.tip = "Confirm the transaction to withdraw";
       try {
-        const value = BigNumber.from(withdrawResponse.priceInWei).add(withdrawResponse.id);
+        const amount = provider.tokenSet.parseToken('ETH', withdrawResponse.token.amount);
+        const value = BigNumber.from(amount).add(withdrawResponse.id);
         const tx = await ethWallet.sendTransaction({
           to: this.featureStatus?.forcedExitContractAddress,
           value: value,
           gasLimit: BigNumber.from('35000')
         });
+        this.saveToLocalStorage(withdrawResponse);
         this.setWalletTx(withdrawResponse.id, tx.hash);
         this.transactionInfo.hash = tx.hash;
         this.transactionInfo.explorerLink = APP_ETH_BLOCK_EXPLORER + "/tx/" + tx.hash;
@@ -922,10 +922,11 @@ export default Vue.extend({
         this.loading = false;
         return;
       }
+      this.saveToLocalStorage(withdrawResponse);
       this.step = 2;
       this.loading = false;
     },
-    async withdrawRequest() {
+    async withdrawRequest(): Promise<requestType|null> {
       try {
         const selectedTokens = this.balancesList.filter((token) => token.choosed).map((token) => walletData.get().syncProvider!.tokenSet.resolveTokenId(token.symbol) as number);
         const pricePerTokenStr = this.featureStatus?.requestFee as string;
@@ -947,7 +948,7 @@ export default Vue.extend({
 
         const sendUntil = Math.min(recommendedValidUntil, validUntil);
 
-        this.saveToLocalStorage({
+        const requestToSave = {
           id: this.txID,
           createdAt,
           token: {
@@ -955,11 +956,11 @@ export default Vue.extend({
             symbol: "ETH",
           },
           sendUntil,
-          contractAddress: this.featureStatus?.forcedExitContractAddress as string,
+          contractAddress: this.featureStatus!.forcedExitContractAddress,
           balances: this.choosedItems,
           target: this.address,
           notFoundCount: 0
-        });
+        } as requestType;
 
         for (let a = 0; a < this.balancesList.length; a++) {
           this.balancesList[a] = { ...this.balancesList[a], choosed: false };
@@ -968,12 +969,12 @@ export default Vue.extend({
         this.forceUpdateVal++;
         this.search = "";
 
-        return withdrawalReponse;
+        return requestToSave;
       } catch (err) {
         this.setErrorModal(err);
         this.step = -1;
         this.address = "";
-        return false;
+        return null;
       }
     },
 
