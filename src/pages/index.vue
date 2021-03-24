@@ -6,9 +6,9 @@
         <template slot="header">How does this all work?</template>
         <div>
         <div>
-          <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
+          <b>zkSync forced withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
           so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
-          <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
+          <div class="_margin-top-1">In order for the account to be eligible for an forced withdrawal all of the following must be true:
             <ul>
               <li>It must exist (hold any funds) in the zkSync network for at least 24 hours.</li>
               <li>The account must be locked (no ChangePubKey operation so far).</li>
@@ -18,7 +18,7 @@
         </div>
       </i-modal>
       <i-modal v-model="manualWarningModal" size="md">
-        <template slot="header">Manual withdraw warning</template>
+        <template slot="header">Manual payment warning</template>
         <div>
           You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be fulfilled.
           <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes my funds would be lost</i-checkbox>
@@ -31,7 +31,7 @@
           <div v-if="step===1" class="returnBtn" @click="step=0">
               <i class="far fa-long-arrow-alt-left"></i>
           </div>
-          <div class="_margin-left-1">Alternative Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>
+          <div class="_margin-left-1">Forced Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>
         </div>
         <div class="formContainer">
           <transition name="fade">
@@ -49,7 +49,7 @@
               The account does not exist on zkSync network.
             </div>
             <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
-              To perform an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
+              To perform a forced withdrawal an account should exist in zkSync network for at least 24 hours.
             </div>
             <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
               {{subError}}
@@ -124,7 +124,7 @@
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
-                <br/>within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+                <br/>within the next <b>{{waitTime}}</b> to perform a forced withdrawal.
                 </div>
             </p>
             <p class="_text-left">
@@ -148,12 +148,12 @@
           <success-block v-else-if="step===4"  :fee="transactionInfo.fee" :continue-btn-function="true" @continue="successBlockContinue">
             <p class="_text-center">Your request has been initiated. You track the progress with the links below:</p> 
             
-            <div class="">
-              <ul class="_display-flex _justify-content-center">
+            <div class="_display-flex _justify-content-center">
+              <ul class="">
                 <li v-for="(item, index) in currentRequest.fulfilledBy" :key="index">
-                <a class="_text-center"  :href="zkscanLinkToTx(item)" target="_blank"> 
-                    {{currentRequest.balances[index].symbol}} withdrawal TX <i class="fas fa-external-link"></i>
-                </a>
+                  <a class="_text-center"  :href="zkscanLinkToTx(item)" target="_blank"> 
+                      {{currentRequest.balances[index].symbol}} withdrawal TX <i class="fas fa-external-link"></i>
+                  </a>
                 </li>
               </ul>
              </div>
@@ -173,7 +173,7 @@
               <div class="_display-flex _text-align-center">
                 Requested at {{getFormattedTime(item.createdAt)}}
 
-                <div class="removeItem" @click="removeFromLocalStorage(item)">
+                <div class="removeItem" @click="removeRequest(item.id)">
                   <i-tooltip>
                     <i class="trash fas fa-trash"></i>
                     <template slot="body">Forget the request</template>
@@ -265,6 +265,9 @@ import { Network } from "zksync/build/types";
 const FORCED_EXIT_API = "http://localhost:3001/api/forced_exit_requests/v0.1";
 
 const UNAVALIABLE_MESSAGE = "Sorry, the automated forced exit procedure is unavailable now. In case of any inconvenience contact us by";
+
+const REQUEST_PREFIX = 'REQUEST-';
+const REQUESTS_LIST_SLOT = 'REQUESTS-LIST';
 
 interface StatusResponse {
   status: "enabled" | "disabled";
@@ -490,8 +493,9 @@ export default Vue.extend({
 
     requestsList(): Array<requestType> {
       // eslint-disable-next-line no-unused-expressions
-      this.forceUpdateRequestsVal;
-      return this.getItemsFromStorage();
+      this.forceUpdateVal;
+      console.log('Reeval');
+      return this.getRequestsObjects();
     },
 
     /* Step 1 */
@@ -556,13 +560,107 @@ export default Vue.extend({
     }
   },
   methods: {
+    /*
+
+      Since there are a lot of async methods modifying the localStorage it was decided to
+      introduce the following scheme to keep everything in sync:
+      
+      1. Whenever a method wants to modify an element, they should modify exactly him.
+      2. The list of all the requests is no longer stored in as the array of JSON objects.
+       Now it is separated into two parts:
+
+       REQUESTS_LIST_SLOT -- contains the list of ids of all requests
+       Each individual request is stored under REQUEST_PREFIX + id
+    */
+    // Returns the requests that are still avaliable
+    getRequestList(): number[] {
+      const list = localStorage.getItem(REQUESTS_LIST_SLOT);
+      if(!list) {
+        return [];
+      } else {
+        return JSON.parse(list);
+      }
+    },
+    getRequestsObjects(): requestType[] {
+      console.log('Calling getting objects');
+      const ids = this.getRequestList();
+
+      const requests = ids.map((id) => this.getRequest(id));
+      const existingRequests = requests.filter((r) => {
+        if(r) {
+          return true;
+        } else {
+          return false;
+        }
+      }) as requestType[];
+
+      console.log(existingRequests);
+      console.log(existingRequests);
+
+      return existingRequests.sort((a, b) => b.sendUntil - a.sendUntil);
+    },
+    setRequestsList(newList: number[]) {
+      const listJson = JSON.stringify(newList);
+      localStorage.setItem(REQUESTS_LIST_SLOT, listJson);
+      
+      this.forceUpdateVal++;
+    },
+    getRequestSlotName(id: number): string {
+      return REQUEST_PREFIX + id;
+    },
+    addRequest(request: requestType) {
+      const id = request.id;
+      const requests = this.getRequestList();
+      requests.push(id);
+
+      this.setRequestsList(requests);
+      localStorage.setItem(this.getRequestSlotName(id), JSON.stringify(request));
+    },
+    getRequest(id: number): requestType|null {
+      const item = localStorage.getItem(this.getRequestSlotName(id));
+      if(!item) {
+        return null;
+      }
+
+      const parsedItem = JSON.parse(item) as requestType;
+      return parsedItem;
+    },
+    removeRequest(id: number) {
+      const request = this.getRequest(id);
+      // The request has been already deleted
+      if(!request) {
+        return;
+      }
+
+      const requestsList = this.getRequestList();
+      const newRequestsList = requestsList.filter((requestId) => requestId !== id);
+      this.setRequestsList(newRequestsList);
+      localStorage.removeItem(this.getRequestSlotName(id));
+    },
+    updateOneRequest(id: number, newRequest: requestType) {
+      localStorage.setItem(this.getRequestSlotName(id), JSON.stringify(newRequest));
+      
+      this.forceUpdateVal++;
+    },
+    updateRequestFields(id: number, fields: Partial<requestType>) {
+      const request = this.getRequest(id);
+      if(!request) {
+        return;
+      }
+
+      const newRequest = {
+        ...request,
+        ...fields
+      };
+
+      this.updateOneRequest(id, newRequest);
+    },
     checkTxStatusLoop(id: number) {
       // We already track the status of the transaction in the id
-      // No need to make requests again
+      // No need to make fetch requests again
       const interval = setInterval(() => {
-        const tx = this.getItemFromStorageById(id);
+        const tx = this.getRequest(id);
 
-        console.log('fetching tx:' , tx); 
         this.currentRequest = tx;
 
         if (tx?.fulfilledBy) {
@@ -572,19 +670,15 @@ export default Vue.extend({
       }, 500);
     },
     setWalletTx(id: number, hash: string) {
-      const items = this.getItemsFromStorage();
-      const newItems = items.map((request) => {
-        if(request.id == id) {
-          return {
-            ...request,
-            walletTx: hash
-          }
-        } else {
-          return request;
-        }
-      });
+      const request = this.getRequest(id);
+      if(!request) {
+        return;
+      }
 
-      this.updateLocalStorage(newItems);
+      this.updateOneRequest(id, {
+        ...request,
+        walletTx: hash
+      });
     },
     async getProvider() {
       if(!this.provider) {
@@ -605,7 +699,7 @@ export default Vue.extend({
       document.body.removeChild(elem);
     },
     async setTokenPrices() {
-      const requests = this.getItemsFromStorage();
+      const requests = this.getRequestsObjects();
       const allTokens = [] as string[];
       requests.forEach((req) => {
         const requestTokens = req.balances.map(bal => bal.symbol);
@@ -647,28 +741,9 @@ export default Vue.extend({
     zkscanLinkToTx(hash: string) {
       return `${APP_ZK_SCAN}/transactions/${hash}`;
     },
-    updateBalancesInLocalStorage(requests: requestType[]) {
-      const newRequests = requests.map((request) => {
-        const target = request.target;
-        // For each request we go through the tokens that were queried and update balance of it
-        const balances = request.balances.map((balance) => {
-          const newBalance = this.cachedState[target][balance.symbol];
-
-          return {
-            ...balance,
-            balance: newBalance
-          } as Balance
-        }); 
-        const newRequest = { ...request, balances } as requestType;
-
-        return newRequest;
-      });
-
-      this.updateLocalStorage(newRequests);
-    },
     async updateCachedAccountStates() {
       const provider = await this.getProvider();
-      const requests = this.getItemsFromStorage();
+      const requests = this.getRequestsObjects();
       
       const updatePromises = requests.map(async (request) => {
         const address = request.target.toLowerCase();
@@ -679,25 +754,24 @@ export default Vue.extend({
 
       try {
         await Promise.all(updatePromises);
-      //  this.updateBalancesInLocalStorage(requests);
       } catch(e) {
         console.warn(`An error while fetching account states occured: ${e.toString()}`);
       }
     },
     async checkFulfilled() {
-      const requests = this.getItemsFromStorage();
+      const requests = this.getRequestsObjects();
 
       // Here we check for each request if it has been fulfilled
       const checkedFulfilledPromises = requests.map(async (request) => {
         // If it has been already fulfilled, no need to check it again
         if (request.fulfilledBy) {
-          return request;
+          return;
         }
 
         // If we tried to fetch the request for 5 times with 404, then 
         // it is likely that it was removed from the DB forever
         if(request.notFoundCount > 5) {
-          return request;
+          return;
         }
 
         // Note that we check if the request has been fulfilled even if it has expired 
@@ -708,26 +782,19 @@ export default Vue.extend({
         const requestStatus = await getRequest(request.id);
 
         if (requestStatus?.fulfilledAt) {
-          return {
-            ...request,
-            fulfilledBy: requestStatus.fulfilledBy,
-          } as requestType;
-        } else {
-          // Basically if the result was 404, then we should add to a count
-          if(!requestStatus) {
-            return {
-              ...request,
-              notFoundCount: request.notFoundCount+1
-            }
-          }
-
-          return request;
+          console.log('Updaing status');
+          this.updateRequestFields(request.id, {
+            fulfilledBy: requestStatus.fulfilledBy!
+          })
+        } else if(!requestStatus) { // Basically if the result was 404, then we should add to a count            
+          this.updateRequestFields(request.id, {
+            notFoundCount: request.notFoundCount+1
+          });
         }
       });
 
       try {
-        const checkedFullfilled = await Promise.all(checkedFulfilledPromises);
-        this.updateLocalStorage(checkedFullfilled);
+        await Promise.all(checkedFulfilledPromises);
       } catch (e) {
         console.warn(`An error while update occured: ${e.toString()}`);
       }
@@ -745,44 +812,6 @@ export default Vue.extend({
     },
     getFormattedTime(time: number): string {
       return moment(time).format("M/D/YYYY h:mm:ss A");
-    },
-    getItemsFromStorage(): Array<requestType> {
-      let data = localStorage.getItem("forcedExitRequests");
-      try {
-        if (!data) {
-          return [];
-        }
-        data = JSON.parse(data);
-        if (!Array.isArray(data)) {
-          return [];
-        }
-      } catch (error) {
-        return [];
-      }
-      return data.sort((a, b) => b.createdAt - a.createdAt);
-    },
-    getItemFromStorageById(id: number): (null | requestType) {
-      const allRequests = this.getItemsFromStorage();
-      for(const request of allRequests) {
-        if(request?.id === id) {
-          return request;
-        }
-      }
-      return null;
-    },
-    saveToLocalStorage(tx: requestType) {
-      const newData = this.getItemsFromStorage();
-      newData.push(tx);
-      this.updateLocalStorage(newData);
-    },
-    removeFromLocalStorage(request: requestType) {
-      let newData = this.getItemsFromStorage();
-      newData = newData.filter((r) => r.id !== request.id);
-      this.updateLocalStorage(newData);
-    },
-    updateLocalStorage(txs: requestType[]) {
-      localStorage.setItem("forcedExitRequests", JSON.stringify(txs));
-      this.forceUpdateRequestsVal++;
     },
 
     async updateStatus() {
@@ -922,7 +951,7 @@ export default Vue.extend({
           gasLimit: BigNumber.from('35000')
         });
         this.currentRequest = withdrawResponse;
-        this.saveToLocalStorage(withdrawResponse);
+        this.addRequest(withdrawResponse);
         this.setWalletTx(withdrawResponse.id, tx.hash);
         this.transactionInfo.hash = tx.hash;
         this.transactionInfo.explorerLink = APP_ETH_BLOCK_EXPLORER + "/tx/" + tx.hash;
@@ -954,7 +983,7 @@ export default Vue.extend({
         this.loading = false;
         return;
       }
-      this.saveToLocalStorage(withdrawResponse);
+      this.addRequest(withdrawResponse);
       this.step = 2;
       this.loading = false;
     },
