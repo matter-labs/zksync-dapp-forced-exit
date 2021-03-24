@@ -1,5 +1,5 @@
 {
   "projects": {
-    "default": "zksync-website"
+    "default": "zksync-forced-exit-ropsten"
   }
 }

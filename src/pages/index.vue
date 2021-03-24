@@ -6,9 +6,9 @@
         <template slot="header">How does this all work?</template>
         <div>
         <div>
-          <b>zkSync forced withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
+          <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
           so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
-          <div class="_margin-top-1">In order for the account to be eligible for an forced withdrawal all of the following must be true:
+          <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
             <ul>
               <li>It must exist (hold any funds) in the zkSync network for at least 24 hours.</li>
               <li>The account must be locked (no ChangePubKey operation so far).</li>
@@ -20,7 +20,7 @@
       <i-modal v-model="manualWarningModal" size="md">
         <template slot="header">Manual payment warning</template>
         <div>
-          You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be fulfilled.
+          You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be initiated.
           <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes my funds would be lost</i-checkbox>
           <i-button block variant="secondary" :disabled="!manualWarningCheckmark" class="_margin-top-1" @click="manualWarningModal=false;withdrawManually()">Continue</i-button>
           <i-button block link variant="secondary" class="_margin-top-05" @click="manualWarningModal=false">Cancel</i-button>
@@ -31,7 +31,7 @@
           <div v-if="step===1" class="returnBtn" @click="step=0">
               <i class="far fa-long-arrow-alt-left"></i>
           </div>
-          <div class="_margin-left-1">Forced Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>
+          <div class="_margin-left-1">Alternative Withdrawal <i class="fas fa-question questionMark" @click="toggleHowThisWorksModal()"></i></div>
         </div>
         <div class="formContainer">
           <transition name="fade">
@@ -49,7 +49,7 @@
               The account does not exist on zkSync network.
             </div>
             <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
-              To perform a forced withdrawal an account should exist in zkSync network for at least 24 hours.
+              To perform an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
             </div>
             <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
               {{subError}}
@@ -124,13 +124,13 @@
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
-                <br/>within the next <b>{{waitTime}}</b> to perform a forced withdrawal.
+                <br/>within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
                 </div>
             </p>
             <p class="_text-left">
               The information about the withdrawal has been saved in the local browser storage.
               Alternatively, you can keep track of the account on its <a :href="addressZkScanLink" target="_blank">zkscan <i class="fas fa-external-link"></i></a> page.
-              After the request is fulfilled, it may take up to 5 hours before the funds reach your L1 account.
+              After the request is initiated, it may take up to 5 hours before the funds reach your L1 account.
             </p>
             <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
@@ -181,7 +181,7 @@
                 </div>
               </div>
               <div v-if="item.fulfilledBy">
-                <div class="_text-align-center _margin-top-1">The request has been successfully fulfilled:</div>
+                <div class="_text-align-center _margin-top-1">The request has been initiated:</div>
                 <div v-for="(hash, index) in item.fulfilledBy" :key="index" class="_text-align-center">
                   <a  :href="zkscanLinkToTx(hash)" target="_blank">
                     Withdrawal of {{item.balances[index].symbol}} <i class="fas fa-external-link"></i>
@@ -190,7 +190,7 @@
                 <div class="_text-align-center _margin-top-1">It may take up to 5 hours before the funds reach your L1 account.</div>
               </div>
               <div v-else-if="!hasExpired(item) && !item.walletTx">
-                <div class="_text-align-center _margin-top-1">For the request to be fulfilled, </div>
+                <div class="_text-align-center _margin-top-1">For the request to be initiated, </div>
                 <div class="_text-align-center">send <b>exactly</b> 
                   
                 <b>{{item.token.amount}} {{item.token.symbol}}</b>
@@ -213,7 +213,7 @@
                 The request was paid for with the following transaction:
                 <br><a :href="getEtherscanLink(item.walletTx)" target="_blank">Link to the transaction. <i class="fas fa-external-link"></i></a>
 
-                <p>The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before processing your request. Once the request is fulfilled on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
+                <p>The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before processing your request. Once the request is initiated on the server side, it may take up to 5 hours before the funds reach your L1 account.</p>
               </div>
               <div v-else>
                 <div class="_text-align-center _margin-top-1">The request has expired.</div>
@@ -262,9 +262,10 @@ import footerComponent from "@/blocks/Footer.vue";
 import { walletData } from "~/plugins/walletData";
 import { Network } from "zksync/build/types";
 
-const FORCED_EXIT_API = "http://localhost:3001/api/forced_exit_requests/v0.1";
+// const FORCED_EXIT_API = "http://localhost:3001/api/forced_exit_requests/v0.1";
+const FORCED_EXIT_API = "https://ropsten-api.zksync.io/api/forced_exit_requests/v0.1";
 
-const UNAVALIABLE_MESSAGE = "Sorry, the automated forced exit procedure is unavailable now. In case of any inconvenience contact us by";
+const UNAVALIABLE_MESSAGE = "Sorry, the alternative withdrawal procedure is unavailable now. In case of any inconvenience contact us by";
 
 const REQUEST_PREFIX = 'REQUEST-';
 const REQUESTS_LIST_SLOT = 'REQUESTS-LIST';
