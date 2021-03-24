@@ -95,7 +95,7 @@
                 </i-tooltip>
               </div>
             </div>
-            <div :class="{'color-gray': choosedItems.length<=0 }">
+            <div v-if="balancesList.length!==0" :class="{'color-gray': choosedItems.length<=0 }">
               <h4 class="_text-center">
                 Complete withdrawal
               </h4>
@@ -206,8 +206,9 @@
                   <i class="copy fas fa-copy" @click="copyValue(item.contractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
-                  </div>
-                <div class="_text-align-center">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
+                </div>
+                <div>The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before initiating the withdrawal.</div>
+                <div class="_text-align-center _margin-top-1">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
               </div>
               <div v-else-if="!hasExpired(item) && item.walletTx">
                 The request was paid for with the following transaction:
@@ -495,7 +496,6 @@ export default Vue.extend({
     requestsList(): Array<requestType> {
       // eslint-disable-next-line no-unused-expressions
       this.forceUpdateVal;
-      console.log('Reeval');
       return this.getRequestsObjects();
     },
 
@@ -583,7 +583,6 @@ export default Vue.extend({
       }
     },
     getRequestsObjects(): requestType[] {
-      console.log('Calling getting objects');
       const ids = this.getRequestList();
 
       const requests = ids.map((id) => this.getRequest(id));
@@ -594,9 +593,6 @@ export default Vue.extend({
           return false;
         }
       }) as requestType[];
-
-      console.log(existingRequests);
-      console.log(existingRequests);
 
       return existingRequests.sort((a, b) => b.sendUntil - a.sendUntil);
     },
@@ -755,6 +751,7 @@ export default Vue.extend({
 
       try {
         await Promise.all(updatePromises);
+        this.forceUpdateVal++;
       } catch(e) {
         console.warn(`An error while fetching account states occured: ${e.toString()}`);
       }
