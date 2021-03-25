@@ -61,8 +61,6 @@
             <p class="_text-center _margin-top-0">
               {{modalParams.message}}
             </p>
-            <p v-if="modalParams.social" class="_text-center">If you think this is a mistake, contact us by</p>
-            <support-block v-if="modalParams.social" />
             <i-button v-if="modalParams.closable" block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
           <div v-else-if="step===1">
@@ -125,7 +123,7 @@
                   <template slot="body">Copied!</template>
                 </i-tooltip>
                 <br/>within the next <b>{{waitTime}}</b>
-                <br/>After the transaction receives {{featureStatus.waitConfirmations}} the server will initiate the withdrawal.
+                <br/>After the transaction receives {{featureStatus.waitConfirmations}} confirmations the server will initiate the withdrawal.
                 </div>
             </p>
             <p class="_text-left">
@@ -163,7 +161,7 @@
         </div>
       </div>
       <div v-if="step===0" class="dropdownsContainer">
-        <dropdown v-for="(item, index) in requestsList" :key="index">
+        <dropdown v-for="(item, index) in requestsList" :key="index" :data-json="JSON.stringify(item)">
           <template slot="header">
             <span>
               <span class="gray">#ID-</span>{{item.id}}
@@ -256,7 +254,7 @@ import moment from "moment";
 import { BigNumber, BigNumberish } from "ethers";
 import { types as SyncTypes, Provider, getDefaultProvider } from "zksync";
 import { Address, Balance } from "@/plugins/types";
-import { ETHER_NETWORK_NAME, APP_ETH_BLOCK_EXPLORER, APP_ZK_SCAN } from "@/plugins/build";
+import { ETHER_NETWORK_NAME, APP_ETH_BLOCK_EXPLORER, APP_ZK_SCAN, APP_ZKSYNC_API_LINK } from "@/plugins/build";
 
 import utils from "@/plugins/utils";
 import supportBlock from "@/blocks/SupportBlock.vue";
@@ -270,10 +268,9 @@ import footerComponent from "@/blocks/Footer.vue";
 import { walletData } from "~/plugins/walletData";
 import { Network } from "zksync/build/types";
 
-// const FORCED_EXIT_API = "http://localhost:3001/api/forced_exit_requests/v0.1";
-const FORCED_EXIT_API = "https://ropsten-api.zksync.io/api/forced_exit_requests/v0.1";
+const FORCED_EXIT_API = `${APP_ZKSYNC_API_LINK}/api/forced_exit_requests/v0.1`;
 
-const UNAVALIABLE_MESSAGE = "Sorry, the alternative withdrawal procedure is unavailable now. In case of any inconvenience contact us by";
+const UNAVALIABLE_MESSAGE = "Alternative Withdrawal is temporarily down or undergoing a planned maintenance. We apologize for the inconvenience — our team is on it, we'll be back up in a bit!";
 
 const REQUEST_PREFIX = 'REQUEST-';
 const REQUESTS_LIST_SLOT = 'REQUESTS-LIST';
@@ -839,7 +836,6 @@ export default Vue.extend({
     async checkAddress() {
       this.loading = true;
       try {
-        const zksync = await walletData.zkSync();
         const provider = await this.getProvider();
         walletData.set({ syncProvider: provider });
         const state = await provider.getState(this.address);
@@ -1005,8 +1001,9 @@ export default Vue.extend({
       this.loading = false;
     },
     async withdrawRequest(): Promise<requestType|null> {
+      const provider = await this.getProvider();
       try {
-        const selectedTokens = this.balancesList.filter((token) => token.choosed).map((token) => walletData.get().syncProvider!.tokenSet.resolveTokenId(token.symbol) as number);
+        const selectedTokens = this.balancesList.filter((token) => token.choosed).map((token) => provider.tokenSet.resolveTokenId(token.symbol) as number);
         const pricePerTokenStr = this.featureStatus?.requestFee as string;
         const pricePerToken = BigNumber.from(pricePerTokenStr);
         await this.updateStatus();
@@ -1018,7 +1015,7 @@ export default Vue.extend({
 
         const amountToSend = BigNumber.from(withdrawalReponse.priceInWei).add(this.txID);
 
-        this.currentWithdrawalFee = walletData.get().syncProvider!.tokenSet.formatToken("ETH", amountToSend) as string;
+        this.currentWithdrawalFee = provider.tokenSet.formatToken("ETH", amountToSend) as string;
 
         const createdAt = new Date(withdrawalReponse.createdAt).getTime();
         const recommendedValidUntil = new Date(createdAt + this.featureStatus!.recomendedTxIntervalMillis).getTime();
