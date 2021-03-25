@@ -49,7 +49,7 @@
               The account does not exist on zkSync network.
             </div>
             <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
-              To perform an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
+              To initiate an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
             </div>
             <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
               {{subError}}
@@ -124,7 +124,8 @@
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
-                <br/>within the next <b>{{waitTime}}</b> to perform an alternative withdrawal.
+                <br/>within the next <b>{{waitTime}}</b>
+                <br/>After the transaction receives {{featureStatus.waitConfirmations}} the server will initiate the withdrawal.
                 </div>
             </p>
             <p class="_text-left">
@@ -228,7 +229,13 @@
                   All of <b>{{balance.symbol}}</b>
                     <span v-if="!item.fulfilledBy && !hasExpired(item)">
                       <br>
-                      Current balance: <b>{{formattedBalance(item.target, balance.symbol)}}</b> (<span class="">~${{ fixedPrice(formattedBalance(item.target, balance.symbol)*tokenPricesMap[balance.symbol]) }})</span>
+                      Current balance: 
+                      <span v-if="cachedState.get(item.target.toLowerCase()) && tokenPricesMap[balance.symbol]">
+                        <b>{{formattedBalance(item.target, balance.symbol)}}</b> ({{ getFormattedTotalPrice(tokenPricesMap[balance.symbol], +formattedBalance(item.target, balance.symbol)) }})
+                      </span>
+                      <span v-else>
+                        Loading...
+                      </span>
                     </span>
                 </div>
               </div>
@@ -561,6 +568,13 @@ export default Vue.extend({
     }
   },
   methods: {
+    getFormattedTotalPrice: (price: number, amount: number) => {
+      const total = price * amount;
+      if (!amount || total === 0) {
+        return "$0.00";
+      }
+      return total < 0.01 ? `<$0.01` : `~$${total.toFixed(2)}`;
+    },
     /*
 
       Since there are a lot of async methods modifying the localStorage it was decided to
@@ -721,6 +735,7 @@ export default Vue.extend({
 
     },
     formattedBalance(_target: string, token: string) {
+      this.forceUpdateVal;
       const target = _target.toLowerCase();
       const targetState = this.cachedState.get(target);
 
@@ -800,6 +815,10 @@ export default Vue.extend({
     fixedPrice(price: number) {
       if(!isFinite(price)) {
         return 'Loading...';
+      }
+
+      if(price < 0.01) {
+        return '<0.01';
       }
 
       return price.toFixed(2);
