@@ -1,7 +1,7 @@
 <!--suppress ALL -->
 <template>
   <div class="_display-flex _flex-direction-row _align-items-center headerWrapper">
-    <svg class="projectLogo _margin-right-1-2" width="120" height="27" viewBox="0 0 120 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg class="projectLogo _margin-right-1-2" width="240" height="54" viewBox="0 0 120 27" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path fill-rule="evenodd" clip-rule="evenodd" d="M41.6539 13.4915L29.8378 1.71674V10.34L18.1055 18.9739L29.8378 18.982V25.2662L41.6539 13.4915Z" fill="#4E529A"/>
       <path fill-rule="evenodd" clip-rule="evenodd" d="M-0.00158644 13.4872L11.8145 25.2619L11.8145 16.708L23.5469 8.0047L11.8145 7.99664L11.8145 1.71246L-0.00158644 13.4872Z" fill="#8C8DFC"/>
       <path d="M59.2586 19.3717H50.2148V16.7746L55.3922 11.0034H50.3482V8.45069H59.1697V10.9146L53.8368 16.7968H59.2586V19.3717Z" fill="white" fill-opacity="0.9"/>

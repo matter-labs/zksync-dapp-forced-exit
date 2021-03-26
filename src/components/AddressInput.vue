@@ -3,7 +3,7 @@
     <div class="walletContainer inputWallet" :class="{'error': error}" @click.self="focusInput()">
       <user-img v-if="isValid" :wallet="inputtedWallet"/>
       <div class="userImgPlaceholder userImg" v-else></div>
-      <input ref="input" v-model="inputtedWallet" autocomplete="none" class="walletAddress" maxlength="45" placeholder="0x address" spellcheck="false" type="text" @keyup.enter="$emit('enter')">
+      <input ref="input" v-model="inputtedWallet" autocomplete="none" class="walletAddress" maxlength="45" placeholder="0x-address to withdraw the funds from" spellcheck="false" type="text" @keyup.enter="$emit('enter')">
     </div>
   </div>
 </template>
@@ -31,10 +31,14 @@ export default Vue.extend({
   watch: {
     inputtedWallet (val) {
       const trimmed = val.trim()
-      this.inputtedWallet = trimmed
+
+      this.inputtedWallet = trimmed;
+      this.$emit('change', this.error || '');
+
       if (val !== trimmed) {
         return
-      }
+      } 
+
       if (this.isValid) {
         this.$emit('input', val)
       } else {
@@ -54,9 +58,13 @@ export default Vue.extend({
     isValid: function (): boolean {
       return utils.validateAddress(this.inputtedWallet)
     },
+    isLowercase: function(): boolean {
+      return this.inputtedWallet == this.inputtedWallet.toLowerCase()
+    },
     error: function (): string {
       if (this.inputtedWallet && !this.isValid) {
-        return 'Invalid address'
+        const isCheckSum = !this.isLowercase;
+        return `The address provided is not a valid ${isCheckSum ? 'checksum' : ''} Ethereum address`;
       } else {
         return ''
       }
