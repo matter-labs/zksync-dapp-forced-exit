@@ -117,13 +117,14 @@
                   <template slot="body">Copied!</template>
                 </i-tooltip>
                 <br>
-                to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> (L1)
+                to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b>
                 <i-tooltip trigger="click">
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
-                <br/>within the next <b>{{waitTime}}</b>
-                <br/>After the transaction receives {{featureStatus.waitConfirmations}} confirmations the server will initiate the withdrawal.
+                <br/>within the next <b>{{waitTime}}.</b>
+                <br/> The transaction must be on L1 with the gasLimit of at least 35000.
+                <div class="_margin-top-1">After the transaction receives {{featureStatus.waitConfirmations}} confirmations the server will initiate the withdrawal.</div>
                 </div>
             </p>
             <p class="_text-left">
@@ -200,13 +201,14 @@
                  </div>
                 <div class="_text-align-center">
                   to 
-                  <b>{{item.contractAddress}}</b> (L1)
+                  <b>{{item.contractAddress}}</b>
                   <i-tooltip trigger="click">
                   <i class="copy fas fa-copy" @click="copyValue(item.contractAddress)"></i>
                   <template slot="body">Copied!</template>
                 </i-tooltip>
+                <br/> The transaction must be on L1 with gasLimit of at least 35000.
                 </div>
-                <div>The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before initiating the withdrawal.</div>
+                <div class="_margin-top-1">The server will wait for {{featureStatus && featureStatus.waitConfirmations}} confirmations of the transaction before initiating the withdrawal.</div>
                 <div class="_text-align-center _margin-top-1">Time until the order expires: <b><time-ticker :time="item.sendUntil" /></b></div>
               </div>
               <div v-else-if="!hasExpired(item) && item.walletTx">
