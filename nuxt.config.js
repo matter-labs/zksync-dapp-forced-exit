@@ -1,6 +1,14 @@
-require('dotenv').config()
+require('dotenv').config();
 
-const pageTitle = 'zksync.io Homepage'
+const pageTitle = 'zkSync Alternative Withdrawal from L2 back to mainnet';
+const pageDescription = 'If you have funds on zkSync on an account that you can\'t control (a smart contract or an exchange deposit account) ' +
+  'it is possible to use the Alternative Withdrawal to move the funds to Layer 1 without interacting with Layer 2.'
+const pageKeywords = "zksync withdrawal, alternative withdrawal, bulk withdrawal, zkSync, Matter Labs, rollup, ZK rollup, zero confirmation, ZKP, zero-knowledge proofs," +
+  " Ethereum, crypto," +
+  " blockchain, permissionless," +
+  " L2," +
+  " secure payments, scalable\n" +
+  "crypto payments"
 
 export default {
   ssr: false,
@@ -17,6 +25,16 @@ export default {
     name: pageTitle,
     titleTemplate: pageTitle,
     meta: [
+      {
+        hid: "keywords",
+        name: "keywords",
+        content: pageKeywords,
+      },
+      {
+        hid: "author",
+        name: "author",
+        content: "https://matter-labs.io",
+      },
       { 'http-equiv': 'pragma', content: 'no-cache' },
       { 'http-equiv': 'cache-control', content: 'no-cache , no-store, must-revalidate' },
       { 'http-equiv': 'expires', content: '0' },
@@ -25,7 +43,7 @@ export default {
       {
         hid: 'description',
         name: 'description',
-        content: process.env.npm_package_description || ''
+        content: pageDescription
       },
       {
         hid: 'msapplication-TileImage',
@@ -68,17 +86,30 @@ export default {
    ** Nuxt.js modules
    */
   modules: [
-    '@nuxtjs/dotenv',
     '@nuxtjs/pwa',
     '@nuxtjs/axios',
     '@inkline/nuxt',
     'vue-scrollto/nuxt',
     '@nuxtjs/style-resources',
-    "nuxt-webfontloader"
+    'nuxt-webfontloader',
+    [
+      'nuxt-social-meta',
+      {
+        url: 'https://withdraw.zksync.io',
+        title: pageTitle,
+        site_name: pageTitle,
+        description: pageDescription,
+        img: 'https://zksync.io/social.jpg',
+        locale: 'en_US',
+        twitter: '@zksync',
+        twitter_card: 'https://zksync.io/social.jpg',
+        themeColor: '#4e529a',
+      },
+    ],
   ],
   webfontloader: {
     google: {
-      families: ["Fira+Sans:400,600", "Fira+Sans+Extra+Condensed:400,600", "Fira+Code:400"],
+      families: ['Fira+Sans:400,600', 'Fira+Sans+Extra+Condensed:400,600', 'Fira+Code:400'],
     },
   },
   inkline: {
@@ -101,7 +132,7 @@ export default {
     extend (config) {
       config.node = {
         fs: 'empty'
-      }
+      };
     }
   },
   generate: {
@@ -113,4 +144,4 @@ export default {
       pagesURLPattern: '/_nuxt/'
     }
   }
-}
+};
