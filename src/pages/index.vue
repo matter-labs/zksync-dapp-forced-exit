@@ -117,7 +117,7 @@
                   <template slot="body">Copied!</template>
                 </i-tooltip>
                 <br>
-                to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b>
+                to <b>{{featureStatus && featureStatus.forcedExitContractAddress}}</b> (L1)
                 <i-tooltip trigger="click">
                   <i class="copy fas fa-copy _margin-left-05" @click="copyValue(featureStatus && featureStatus.forcedExitContractAddress)"></i>
                   <template slot="body">Copied!</template>
@@ -200,7 +200,7 @@
                  </div>
                 <div class="_text-align-center">
                   to 
-                  <b>{{item.contractAddress}}</b>
+                  <b>{{item.contractAddress}}</b> (L1)
                   <i-tooltip trigger="click">
                   <i class="copy fas fa-copy" @click="copyValue(item.contractAddress)"></i>
                   <template slot="body">Copied!</template>
