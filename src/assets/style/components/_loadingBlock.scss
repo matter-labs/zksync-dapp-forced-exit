@@ -1,0 +1,10 @@
+.loadingBlock {
+  margin-top: 0;
+  padding-top: 0;
+
+  .spinnerContainer {
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+  }
+}

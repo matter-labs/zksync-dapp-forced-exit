@@ -30,7 +30,12 @@ input[type=number] {
   cursor: pointer;
 
   &:hover {
+    color: $lightViolet;
     text-decoration: underline;
+  }
+
+  &:focus {
+    color: $lightViolet;
   }
 }
 .linkItem {
@@ -40,7 +45,7 @@ input[type=number] {
   transition: color $transition1;
   text-decoration: none !important;
   cursor: pointer;
-  
+
   &:hover {
     color: $lightViolet !important;
   }
@@ -111,7 +116,16 @@ button.-lg.-circle {
   }
 }
 
+.bold {
+  font-weight: bold;
+}
 
+._margin-top-05 {
+  margin-top: 0.25rem !important;
+}
+._margin-left-05 {
+  margin-left: 0.25rem !important;
+}
 
 .form-input-group {
   .form-input {
@@ -153,5 +167,15 @@ button.-lg.-circle {
   }
   .form-input.-prefixed input {
     padding-left: 3rem !important;
+  }
+}
+.form-check.-checkbox {
+  label {
+    outline: none;
+    white-space: normal;
+    line-height: 1.25;
+  }
+  input:checked ~ .form-input-label::before {
+    background-color: $lightViolet !important;
   }
 }

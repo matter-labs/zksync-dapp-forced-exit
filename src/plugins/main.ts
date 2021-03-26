@@ -13,9 +13,9 @@ Vue.component("Loader", Loader);
  * Implementation of the tokenFormatter as a global filter
  */
 Vue.filter("formatToken", (value: string, symbol: TokenSymbol) => {
-    return utils.handleFormatToken(symbol, value);
+  return utils.handleFormatToken(symbol, value);
 });
-  
+
 /**
  * Implementation of the tokenFormatter as a global filter
  */
