@@ -12633,6 +12633,11 @@ number-to-bn@1.7.0:
     bn.js "4.11.6"
     strip-hex-prefix "1.0.0"
 
+nuxt-social-meta@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/nuxt-social-meta/-/nuxt-social-meta-0.0.5.tgz#60dc2e8dc00401a122fc069fd9aa541894db5b2b"
+  integrity sha512-HVBuw2/ci4wiJxkEZDWP9t/vP7knM2APN9Swhslgi28uD4jgOUqWsEeljRP/TWB+kg1nEM3JhyiPIn3EdmuUFQ==
+
 nuxt-webfontloader@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/nuxt-webfontloader/-/nuxt-webfontloader-1.1.0.tgz#68b47ffbeaee4c41969f42f57a86946e0c36715c"

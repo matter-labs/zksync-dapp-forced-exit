@@ -37,6 +37,7 @@
     "lottie-web": "^5.7.5",
     "moment": "^2.29.1",
     "nuxt": "^2.14.12",
+    "nuxt-social-meta": "^0.0.5",
     "nuxt-webfontloader": "^1.1.0",
     "qrcode": "^1.0.0",
     "surge": "^0.21.7",

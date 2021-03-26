@@ -1,8 +1,7 @@
 require('dotenv').config();
 
 const pageTitle = 'zkSync Alternative Withdrawal from L2 back to mainnet';
-const pageDescription = 'If you have funds on zkSync on an account that you can\'t control (a smart contract or an exchange deposit account) ' +
-  'it is possible to use the Alternative Withdrawal to move the funds to Layer 1 without interacting with Layer 2.'
+const pageDescription = 'Easily move your funds to L1 without interaction with L2.'
 const pageKeywords = "zksync withdrawal, alternative withdrawal, bulk withdrawal, zkSync, Matter Labs, rollup, ZK rollup, zero confirmation, ZKP, zero-knowledge proofs," +
   " Ethereum, crypto," +
   " blockchain, permissionless," +
