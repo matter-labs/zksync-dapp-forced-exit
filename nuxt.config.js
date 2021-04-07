@@ -2,12 +2,26 @@ require('dotenv').config();
 
 const pageTitle = 'zkSync Alternative Withdrawal from L2 back to mainnet';
 const pageDescription = 'Easily move your funds to L1 without interaction with L2.'
-const pageKeywords = "zksync withdrawal, alternative withdrawal, bulk withdrawal, zkSync, Matter Labs, rollup, ZK rollup, zero confirmation, ZKP, zero-knowledge proofs," +
-  " Ethereum, crypto," +
-  " blockchain, permissionless," +
-  " L2," +
-  " secure payments, scalable\n" +
-  "crypto payments"
+const pageKeywords = [
+  'zksync withdrawal', 
+  'alternative withdrawal', 
+  'bulk withdrawal', 
+  'zkSync', 
+  'Matter Labs', 
+  'rollup', 
+  'ZK rollup', 
+  'zero confirmation', 
+  'ZKP', 
+  'zero-knowledge proofs',
+  'Ethereum', 
+  'crypto',
+  'blockchain', 
+  'permissionless', 
+  'L2',
+  'secure payments', 
+  'scalable',
+  'crypto payments'
+].join(', ');
 
 export default {
   ssr: false,
