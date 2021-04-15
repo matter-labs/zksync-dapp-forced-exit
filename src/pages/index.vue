@@ -21,7 +21,7 @@
         <template slot="header">Manual payment warning</template>
         <div>
           You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be initiated.
-          <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes my funds would be lost</i-checkbox>
+          <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes the withdrawal may not be initiated.</i-checkbox>
           <i-button block variant="secondary" :disabled="!manualWarningCheckmark" class="_margin-top-1" @click="manualWarningModal=false;withdrawManually()">Continue</i-button>
           <i-button block link variant="secondary" class="_margin-top-05" @click="manualWarningModal=false">Cancel</i-button>
         </div>
