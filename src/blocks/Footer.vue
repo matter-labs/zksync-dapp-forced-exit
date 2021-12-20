@@ -9,10 +9,10 @@
         </i-column>
         <i-column :xs="12" :md="6" class="_padding-right-0">
           <div class="rightSideLinks">
-            <a :href="'/contact.html'"><i class="fal fa-at"/>&nbsp;Contacts</a>
-            <a :href="'https://github.com/matter-labs/zksync'"><i class="fab fa-github"/>&nbsp;GitHub</a>
-            <a :href="'/legal/terms.html'">Terms</a>
-            <a :href="'/legal/privacy.html'">Privacy Policy</a>
+            <a href="https://zksync.io/contact.html" target="_blank"><i class="fal fa-at"/>&nbsp;Contacts</a>
+            <a href="https://github.com/matter-labs/zksync" target="_blank"><i class="fab fa-github"/>&nbsp;GitHub</a>
+            <a href="https://zksync.io/legal/terms.html" target="_blank">Terms</a>
+            <a href="https://zksync.io/legal/privacy.html" target="_blank">Privacy Policy</a>
           </div>
         </i-column>
       </i-row>
