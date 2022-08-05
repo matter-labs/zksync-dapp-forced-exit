@@ -57,7 +57,6 @@ typings/
 *.tgz
 
 # Yarn Integrity file
-.yarn-integrity
 
 # dotenv environment variables file
 .env
@@ -98,7 +97,8 @@ sw.*
 
 # Cache & swap files
 *.swp
-/.yarn/
+/.yarn/cache
+/.yarn/install-state.gz
 /.firebase/
 /.eslintcache/
 
