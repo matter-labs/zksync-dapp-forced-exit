@@ -1,0 +1,33 @@
+{
+  "projects": {
+    "default": "forced-exit-staging"
+  },
+  "targets": {
+    "forced-exit": {
+      "hosting": {
+        "mainnet": [
+          "zksync-forced-exit-mainnet"
+        ],
+        "goerli": [
+          "zksync-forced-exit-goerli"
+        ],
+        "sepolia": [
+          "zksync-forced-exit-sepolia"
+        ]
+      }
+    },
+    "forced-exit-staging": {
+      "hosting": {
+        "mainnet": [
+          "zksync-forced-exit-staging-mainnet"
+        ],
+        "goerli": [
+          "zksync-forced-exit-staging-goerli"
+        ],
+        "sepolia": [
+          "zksync-forced-exit-staging-sepolia"
+        ]
+      }
+    }
+  }
+}

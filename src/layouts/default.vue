@@ -40,13 +40,8 @@ export default {
   mounted() {
     if (process.client) {
       window.history.scrollRestoration = "manual";
+      this.$inkline.config.variant = "dark";
     }
-  },
-  methods: {
-    toggleDarkMode() {
-      this.$inkline.config.variant = this.$inkline.config.variant === "light" ? "dark" : "light";
-      localStorage.setItem("colorTheme", this.$inkline.config.variant);
-    },
   },
 };
 </script>
