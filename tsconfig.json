@@ -41,8 +41,11 @@
     "node_modules",
     ".nuxt",
     "dist",
+    ".nuxt",
     "public",
     ".github",
+    "environments",
+    ".yarn",
     "environments"
   ]
 }
