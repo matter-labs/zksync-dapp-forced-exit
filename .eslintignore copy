@@ -1,8 +1,0 @@
-node_modules/*
-.nuxt/*
-src/static/*
-.github/*
-.idea/*
-environments/*
-public/*
-tests/*

@@ -21,10 +21,6 @@ jobs:
           yarn set version 3.1.1
           yarn install
 
-      - name: "Lint"
-        run: |
-          yarn lint --max-warnings 0
-
       - name: "Deploy target: goerli"
         run: yarn run ci:build:goerli
       - uses: matter-labs/action-hosting-deploy@v0
