@@ -34,7 +34,6 @@
       "@nuxt/types",
       "@nuxtjs/axios",
       "@nuxt/vue-app",
-      "lodash"
     ]
   },
   "exclude": [

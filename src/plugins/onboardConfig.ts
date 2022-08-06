@@ -76,10 +76,5 @@ export default (ctx: any) => {
     walletSelect: {
       wallets: initializedWallets.wallets,
     },
-    popupContent: {
-      dismiss: "Dismiss",
-      teaser: "Can't find your wallet?",
-      fullHtml: `If you don't have a web3-compatible wallet, then you should complete the withdraw manually.`,
-    },
   };
 };

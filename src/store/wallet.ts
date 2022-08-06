@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { ActionTree, GetterTree, MutationTree } from "vuex";
 
-import Onboard from "@matterlabs/zk-wallet-onboarding";
+import Onboard from "bnc-onboard";
 
 import onboardConfig from "@/plugins/onboardConfig";
 import web3Wallet from "@/plugins/web3";
