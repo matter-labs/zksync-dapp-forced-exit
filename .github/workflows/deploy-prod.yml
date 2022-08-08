@@ -39,7 +39,7 @@ jobs:
       - uses: matter-labs/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_ZKSYNC_DAPP_FORCED_EXIT }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT }}"
           target: mainnet
           projectId: forced-exit
           channelID: live
@@ -49,7 +49,7 @@ jobs:
       - uses: matter-labs/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_ZKSYNC_DAPP_FORCED_EXIT }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT }}"
           target: goerli
           projectId: forced-exit
           channelID: live
@@ -59,7 +59,7 @@ jobs:
       - uses: matter-labs/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_ZKSYNC_DAPP_FORCED_EXIT }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT }}"
           target: sepolia
           projectId: forced-exit
           channelID: live
