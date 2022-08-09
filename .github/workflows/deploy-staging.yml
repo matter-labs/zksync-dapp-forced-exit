@@ -47,6 +47,6 @@ jobs:
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT_STAGING }}"
-          target: sepolia
+          target: mainnet
           projectId: forced-exit-staging
           channelID: live

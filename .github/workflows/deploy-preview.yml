@@ -40,6 +40,4 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT_STAGING }}"
           target: ${{ github.event.inputs.network || 'goerli' }}
           projectId: forced-exit-staging
-          channelId: "v${{ github.ref }}"
-        env:
-          FIREBASE_CLI_PREVIEWS: hostingchannel
+          channelId: "${{ github.ref }}"
