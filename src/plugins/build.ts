@@ -30,7 +30,7 @@ export const ETHER_PREFIX = ETHER_PRODUCTION ? "" : ETHER_NETWORK_NAME;
 export const ETHER_NETWORK_ID = _ETHER_NETWORK_ID_DICTIONARY[ETHER_NETWORK_NAME];
 export const APP_ZKSYNC_API_LINK = `https://${ETHER_PREFIX ? ETHER_PREFIX + "-" : ""}api.zksync.io`;
 export const APP_ZK_SCAN = `https://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}zkscan.io`;
-export const APP_ETH_BLOCK_EXPLORER = `https://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}.etherscan.io`;
+export const APP_ETH_BLOCK_EXPLORER = `https://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}etherscan.io`;
 export const APP_WS_API = `wss://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}api.zksync.io/jsrpc-ws`;
 
 const env = process.env.APP_ENV ?? "dev";
