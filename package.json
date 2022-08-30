@@ -31,7 +31,7 @@
     "url": "https://github.com/matter-labs/zksync-dapp-forced-exit/issues"
   },
   "scripts": {
-    "local": "yarn ci:env 'mainnet' 'dev' 1 1",
+    "local": "yarn ci:env 'goerli' 'dev' 1 1",
     "dev": "yarn local && nuxt",
     "generate": "nuxt generate ",
     "start": "yarn local && nuxt start",
