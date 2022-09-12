@@ -10,9 +10,6 @@
         ],
         "goerli": [
           "zksync-forced-exit-goerli"
-        ],
-        "sepolia": [
-          "zksync-forced-exit-sepolia"
         ]
       }
     },
@@ -23,9 +20,6 @@
         ],
         "goerli": [
           "zksync-forced-exit-staging-goerli"
-        ],
-        "sepolia": [
-          "zksync-forced-exit-staging-sepolia"
         ]
       }
     }

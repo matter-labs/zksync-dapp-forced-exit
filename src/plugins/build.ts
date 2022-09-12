@@ -3,7 +3,6 @@ type networkIDS = {
 };
 const _ETHER_NETWORK_ID_DICTIONARY = {
   goerli: 4,
-  sepolia: 11155111,
   mainnet: 1,
   localhost: 9,
 } as networkIDS;

@@ -355,7 +355,7 @@ export interface BatchFee {
   totalFee: BigNumber;
 }
 
-export declare function getDefaultProvider(network: "localhost" | "goerli" | "sepolia" | "mainnet", transport?: "WS" | "HTTP"): Promise<Provider>;
+export declare function getDefaultProvider(network: "localhost" | "goerli" | "mainnet", transport?: "WS" | "HTTP"): Promise<Provider>;
 
 export declare class Provider {
   transport: AbstractJSONRPCTransport;
