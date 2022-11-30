@@ -36,7 +36,7 @@ export default {
         {
           name: "Discord Community",
           icon: ["fa-discord", "fab"],
-          url: "https://discord.com/invite/px2aR7w",
+          url: "https://join.zksync.dev/",
         },
         {
           name: "Telegram Community",
