@@ -33,7 +33,7 @@ jobs:
 
       - name: "Deploy dist to ${{ github.event.inputs.network || 'goerli' }}"
         run: "yarn run ci:build:${{ github.event.inputs.network || 'goerli' }}"
-      - uses: matter-labs/action-hosting-deploy@v0
+      - uses: matter-labs/action-hosting-deploy@main
         id: deploy_preview
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"

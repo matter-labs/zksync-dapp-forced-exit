@@ -36,7 +36,7 @@ jobs:
 
       - name: "Deploy target: prod-mainnet"
         run: yarn run ci:build:mainnet
-      - uses: matter-labs/action-hosting-deploy@v0
+      - uses: matter-labs/action-hosting-deploy@main
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT }}"
@@ -46,7 +46,7 @@ jobs:
 
       - name: "Deploy target: prod-goerli"
         run: yarn run ci:build:goerli
-      - uses: matter-labs/action-hosting-deploy@v0
+      - uses: matter-labs/action-hosting-deploy@main
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT }}"
