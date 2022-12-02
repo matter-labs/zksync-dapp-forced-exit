@@ -34,15 +34,17 @@
       "@nuxt/types",
       "@nuxtjs/axios",
       "@nuxt/vue-app",
-      "lodash"
     ]
   },
   "exclude": [
     "node_modules",
     ".nuxt",
     "dist",
+    ".nuxt",
     "public",
     ".github",
+    "environments",
+    ".yarn",
     "environments"
   ]
 }

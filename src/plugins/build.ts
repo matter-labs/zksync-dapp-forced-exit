@@ -1,9 +1,10 @@
+import { NuxtOptionsBuild } from "@nuxt/types/config/build";
+
 type networkIDS = {
   [key: string]: number;
 };
 const _ETHER_NETWORK_ID_DICTIONARY = {
-  rinkeby: 4,
-  ropsten: 3,
+  goerli: 5,
   mainnet: 1,
   localhost: 9,
 } as networkIDS;
@@ -23,15 +24,42 @@ export const ETHER_NETWORK_NAME: string = process.env.APP_CURRENT_NETWORK || "";
 
 export const ETHER_PRODUCTION = ETHER_NETWORK_NAME === "mainnet";
 
-console.log("production: ", ETHER_PRODUCTION);
-
 export const ETHER_PREFIX = ETHER_PRODUCTION ? "" : ETHER_NETWORK_NAME;
-export const ETHER_PREFIX_DOT = ETHER_PREFIX + (ETHER_PRODUCTION ? "" : ".");
-export const ETHER_PREFIX_MINUS = ETHER_PREFIX + (ETHER_PRODUCTION ? "" : "-");
 
 export const ETHER_NETWORK_ID = _ETHER_NETWORK_ID_DICTIONARY[ETHER_NETWORK_NAME];
-export const APP_ZKSYNC_API_LINK = ETHER_NETWORK_NAME === 'localhost' ? 'http://localhost:3001' : `https://${ETHER_PREFIX_MINUS}api.zksync.io`;
-export const APP_ZK_SCAN = ETHER_NETWORK_NAME === 'localhost' ? `http://localhost:7000`: `https://${ETHER_PREFIX_DOT}zkscan.io`;
-export const APP_ZKSYNC_BLOCK_EXPLORER = `${APP_ZK_SCAN}/explorer`;
-export const APP_ETH_BLOCK_EXPLORER = `https://${ETHER_PREFIX_DOT}etherscan.io`;
-export const APP_WS_API = `wss://${ETHER_PREFIX_DOT}api.zksync.io/jsrpc-ws`;
+export const APP_ZKSYNC_API_LINK = `https://${ETHER_PREFIX ? ETHER_PREFIX + "-" : ""}api.zksync.io`;
+export const APP_ZK_SCAN = `https://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}zkscan.io`;
+export const APP_ETH_BLOCK_EXPLORER = `https://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}etherscan.io`;
+export const APP_WS_API = `wss://${ETHER_PREFIX ? ETHER_PREFIX + "." : ""}api.zksync.io/jsrpc-ws`;
+
+const env = process.env.APP_ENV ?? "dev";
+export const isProduction: boolean = ETHER_PRODUCTION && env === "prod";
+export const isDebugEnabled: boolean = env === "dev";
+const nuxtBuildOptionsDefault: NuxtOptionsBuild = {
+  corejs: 3,
+  ssr: false,
+};
+const nuxtBuildProdOptions: NuxtOptionsBuild = {
+  ...nuxtBuildOptionsDefault,
+  babel: {
+    compact: true,
+  },
+  extractCSS: {
+    ignoreOrder: true,
+  },
+  optimization: {
+    removeAvailableModules: true,
+    flagIncludedChunks: true,
+    mergeDuplicateChunks: true,
+    splitChunks: {
+      chunks: "all",
+      name: isProduction ? undefined : "chunk",
+      maxSize: 900 * 1024,
+    },
+    nodeEnv: isProduction ? "14" : false,
+    minimize: isProduction,
+  },
+  hardSource: isProduction,
+};
+
+export const nuxtBuildConfig = isProduction ? nuxtBuildProdOptions : nuxtBuildOptionsDefault;

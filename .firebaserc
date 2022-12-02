@@ -1,0 +1,27 @@
+{
+  "projects": {
+    "default": "forced-exit-staging"
+  },
+  "targets": {
+    "forced-exit": {
+      "hosting": {
+        "mainnet": [
+          "zksync-forced-exit-mainnet"
+        ],
+        "goerli": [
+          "zksync-forced-exit-goerli"
+        ]
+      }
+    },
+    "forced-exit-staging": {
+      "hosting": {
+        "mainnet": [
+          "zksync-forced-exit-staging-mainnet"
+        ],
+        "goerli": [
+          "zksync-forced-exit-staging-goerli"
+        ]
+      }
+    }
+  }
+}

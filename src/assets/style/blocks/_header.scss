@@ -150,162 +150,26 @@ body {
     .mainIndexHeader {
       height: 100%;
       width: 100%;
+
+      .logoLink {
+        position: relative;
+        display: flex;
+
+        .badge {
+          padding: 0;
+          color: $lightViolet !important;
+          font-weight: 400;
+          font-size: 12px !important;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          background: transparent !important;
+        }
+      }
     }
 
     @media screen and (max-width: $mobile) {
-      .mobileIndexHeader {
-        padding: 0;
-      }
-      &.opened {
-
-        .mobileIndexHeader {
-          padding: 0;
-
-          .hamContainer #ham {
-            transform: rotate(45deg);
-
-            .top {
-              stroke-dashoffset: -98px;
-            }
-
-            .bottom {
-              stroke-dashoffset: -138px;
-            }
-          }
-        }
-
-        .mainIndexHeader {
-          transform: translateY(80px);
-          min-height: 220px;
-          height: auto;
-        }
-      }
-
-      .mobileIndexHeader {
-        z-index: 5;
-        width: 100%;
-        height: 100%;
-        padding: 0;
-        background-color: $darkBlack;
-
-        .column:last-child {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-        }
-
-        .hamContainer {
-          width: 50px;
-
-          #ham {
-            position: relative;
-            top: 3px;
-            z-index: 99;
-            width: 50px;
-            height: auto;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            // transition: transform 400ms;
-            user-select: none;
-
-            .line {
-              fill: none;
-              // transition: 400ms ease;
-              stroke: $white;
-              stroke-width: 5.5;
-              stroke-linecap: round;
-            }
-
-            .top {
-              stroke-dasharray: 40 139;
-            }
-
-            .bottom {
-              stroke-dasharray: 40 180;
-            }
-          }
-        }
-      }
       .mainIndexHeader {
-        z-index: -1;
-        // position: absolute;
-        left: 0;
-        top: 0;
-        padding: 10px 12px 10px;
-        background-color: $darkBlack;
-        // transition: transform $transition2;
-        will-change: transform;
-        transform: translateY(-100vh);
-        min-height: 220px;
-        height: auto;
-
-        .column {
-          padding-left: 0 !important;
-          padding-right: 0 !important;
-
-          &:last-child {
-            flex-direction: column !important;
-            align-items: initial;
-            justify-content: flex-start !important;
-          }
-        }
-
-        .socialIcons {
-          width: 100%;
-          margin: 27px 0;
-          display: flex;
-          justify-content: space-between;
-          text-align: center;
-          align-items: center;
-        }
-
-        .linksContainer {
-          width: 100%;
-          position: static;
-          transform: none;
-          flex-direction: column;
-          text-align: left;
-          justify-content: flex-start;
-          align-items: initial;
-
-          a {
-            font-size: 18px;
-            padding: 15px 0;
-            text-align: left;
-            &:first-child
-            {
-              padding-top: 0;
-            }
-            &:last-child
-            {
-              padding-bottom: 0;
-            }
-          }
-
-          .dropdown.-dark {
-            width: 100%;
-
-            & > .dropDownHandler {
-              font-size: 18px;
-              padding: 15px 0;
-              text-align: left;
-            }
-
-            & > .menu[data-popper-placement="bottom"] {
-              position: initial !important;
-              width: 100% !important;
-
-              & > span.arrow {
-                display: none;
-              }
-
-              & > a.item {
-                font-size: 18px;
-                padding: 15px;
-              }
-            }
-          }
-        }
+        
       }
     }
   }

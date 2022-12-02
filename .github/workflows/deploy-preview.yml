@@ -1,0 +1,43 @@
+name: "Deploy preview"
+"on":
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      network:
+        type: string
+        default: "goerli"
+        required: false
+        description: "target/env: mainnet, goerli"
+jobs:
+  build_and_preview:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} or ${{ github.event.repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    outputs:
+      results: "${{ steps.deploy_preview.outputs.urls }}"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Enable yarn cache"
+        uses: c-hive/gha-yarn-cache@v2  # using cache
+
+      - name: "Setup node@14"
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: "Install dependencies"
+        run: |
+          yarn set version 3.1.1
+          yarn install
+          npm install -g firebase-tools
+
+      - name: "Deploy dist to ${{ github.event.inputs.network || 'goerli' }}"
+        run: "yarn run ci:build:${{ github.event.inputs.network || 'goerli' }}"
+      - uses: matter-labs/action-hosting-deploy@main
+        id: deploy_preview
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT_STAGING }}"
+          target: ${{ github.event.inputs.network || 'goerli' }}
+          projectId: forced-exit-staging
+          channelId: "${{ github.ref }}"

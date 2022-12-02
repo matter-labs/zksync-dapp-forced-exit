@@ -119,15 +119,46 @@ export declare class Signer {
   readonly privateKey: Uint8Array;
   private constructor();
   pubKeyHash(): PubKeyHash;
-  signSyncTransfer(transfer: { accountId: number; from: Address; to: Address; tokenId: number; amount: BigNumberish; fee: BigNumberish; nonce: number }): Transfer;
-  signSyncWithdraw(withdraw: { accountId: number; from: Address; ethAddress: string; tokenId: number; amount: BigNumberish; fee: BigNumberish; nonce: number }): Withdraw;
-  signSyncForcedExit(forcedExit: { initiatorAccountId: number; target: Address; tokenId: number; fee: BigNumberish; nonce: number }): ForcedExit;
-  signSyncChangePubKey(changePubKey: { accountId: number; account: Address; newPkHash: PubKeyHash; feeTokenId: number; fee: BigNumberish; nonce: number }): ChangePubKey;
+  signSyncTransfer(transfer: {
+    accountId: number;
+    from: Address;
+    to: Address;
+    tokenId: number;
+    amount: BigNumberish;
+    fee: BigNumberish;
+    nonce: number;
+  }): Transfer;
+
+  signSyncWithdraw(withdraw: {
+    accountId: number;
+    from: Address;
+    ethAddress: string;
+    tokenId: number;
+    amount: BigNumberish;
+    fee: BigNumberish;
+    nonce: number;
+  }): Withdraw;
+
+  signSyncForcedExit(forcedExit: {
+    initiatorAccountId: number;
+    target: Address;
+    tokenId: number;
+    fee: BigNumberish;
+    nonce: number;
+  }): ForcedExit;
+
+  signSyncChangePubKey(changePubKey: {
+    accountId: number;
+    account: Address;
+    newPkHash: PubKeyHash;
+    feeTokenId: number;
+    fee: BigNumberish;
+    nonce: number;
+  }): ChangePubKey;
+
   static fromPrivateKey(pk: Uint8Array): Signer;
   static fromSeed(seed: Uint8Array): Signer;
-  static fromETHSignature(
-    ethSigner: ethers.Signer,
-  ): Promise<{
+  static fromETHSignature(ethSigner: ethers.Signer): Promise<{
     signer: Signer;
     ethSignatureType: EthSignerType;
   }>;
@@ -142,12 +173,44 @@ export declare class Wallet {
   provider: Provider;
   private constructor();
   connect(provider: Provider): this;
-  static fromEthSigner(ethWallet: ethers.Signer, provider: Provider, signer?: Signer, accountId?: number, ethSignerType?: EthSignerType): Promise<Wallet>;
-  static fromEthSignerNoKeys(ethWallet: ethers.Signer, provider: Provider, accountId?: number, ethSignerType?: EthSignerType): Promise<Wallet>;
+  static fromEthSigner(
+    ethWallet: ethers.Signer,
+    provider: Provider,
+    signer?: Signer,
+    accountId?: number,
+    ethSignerType?: EthSignerType
+  ): Promise<Wallet>;
+
+  static fromEthSignerNoKeys(
+    ethWallet: ethers.Signer,
+    provider: Provider,
+    accountId?: number,
+    ethSignerType?: EthSignerType
+  ): Promise<Wallet>;
+
   getEthMessageSignature(message: string): Promise<TxEthSignature>;
-  signSyncTransfer(transfer: { to: Address; token: TokenLike; amount: BigNumberish; fee: BigNumberish; nonce: number }): Promise<SignedTransaction>;
-  signSyncForcedExit(forcedExit: { target: Address; token: TokenLike; fee: BigNumberish; nonce: number }): Promise<SignedTransaction>;
-  syncForcedExit(forcedExit: { target: Address; token: TokenLike; fee?: BigNumberish; nonce?: Nonce }): Promise<Transaction>;
+  signSyncTransfer(transfer: {
+    to: Address;
+    token: TokenLike;
+    amount: BigNumberish;
+    fee: BigNumberish;
+    nonce: number;
+  }): Promise<SignedTransaction>;
+
+  signSyncForcedExit(forcedExit: {
+    target: Address;
+    token: TokenLike;
+    fee: BigNumberish;
+    nonce: number;
+  }): Promise<SignedTransaction>;
+
+  syncForcedExit(forcedExit: {
+    target: Address;
+    token: TokenLike;
+    fee?: BigNumberish;
+    nonce?: Nonce;
+  }): Promise<Transaction>;
+
   syncMultiTransfer(
     transfers: {
       to: Address;
@@ -155,11 +218,25 @@ export declare class Wallet {
       amount: BigNumberish;
       fee: BigNumberish;
       nonce?: Nonce;
-    }[],
+    }[]
   ): Promise<Transaction[]>;
 
-  syncTransfer(transfer: { to: Address; token: TokenLike; amount: BigNumberish; fee?: BigNumberish; nonce?: Nonce }): Promise<Transaction>;
-  signWithdrawFromSyncToEthereum(withdraw: { ethAddress: string; token: TokenLike; amount: BigNumberish; fee: BigNumberish; nonce: number }): Promise<SignedTransaction>;
+  syncTransfer(transfer: {
+    to: Address;
+    token: TokenLike;
+    amount: BigNumberish;
+    fee?: BigNumberish;
+    nonce?: Nonce;
+  }): Promise<Transaction>;
+
+  signWithdrawFromSyncToEthereum(withdraw: {
+    ethAddress: string;
+    token: TokenLike;
+    amount: BigNumberish;
+    fee: BigNumberish;
+    nonce: number;
+  }): Promise<SignedTransaction>;
+
   withdrawFromSyncToEthereum(withdraw: {
     ethAddress: string;
     token: TokenLike;
@@ -170,10 +247,26 @@ export declare class Wallet {
   }): Promise<Transaction>;
 
   isSigningKeySet(): Promise<boolean>;
-  signSetSigningKey(changePubKey: { feeToken: TokenLike; fee: BigNumberish; nonce: number; onchainAuth: boolean }): Promise<SignedTransaction>;
-  setSigningKey(changePubKey: { feeToken: TokenLike; fee?: BigNumberish; nonce?: Nonce; onchainAuth?: boolean }): Promise<Transaction>;
+  signSetSigningKey(changePubKey: {
+    feeToken: TokenLike;
+    fee: BigNumberish;
+    nonce: number;
+    onchainAuth: boolean;
+  }): Promise<SignedTransaction>;
+
+  setSigningKey(changePubKey: {
+    feeToken: TokenLike;
+    fee?: BigNumberish;
+    nonce?: Nonce;
+    onchainAuth?: boolean;
+  }): Promise<Transaction>;
+
   isOnchainAuthSigningKeySet(nonce?: Nonce): Promise<boolean>;
-  onchainAuthSigningKey(nonce?: Nonce, ethTxOptions?: ethers.providers.TransactionRequest): Promise<ContractTransaction>;
+  onchainAuthSigningKey(
+    nonce?: Nonce,
+    ethTxOptions?: ethers.providers.TransactionRequest
+  ): Promise<ContractTransaction>;
+
   getCurrentPubKeyHash(): Promise<PubKeyHash>;
   getNonce(nonce?: Nonce): Promise<number>;
   getAccountId(): Promise<number | undefined>;
@@ -191,7 +284,12 @@ export declare class Wallet {
     approveDepositAmountForERC20?: boolean;
   }): Promise<ETHOperation>;
 
-  emergencyWithdraw(withdraw: { token: TokenLike; accountId?: number; ethTxOptions?: ethers.providers.TransactionRequest }): Promise<ETHOperation>;
+  emergencyWithdraw(withdraw: {
+    token: TokenLike;
+    accountId?: number;
+    ethTxOptions?: ethers.providers.TransactionRequest;
+  }): Promise<ETHOperation>;
+
   private modifyEthersError;
   private setRequiredAccountIdFromServer;
 }
@@ -320,7 +418,7 @@ export interface ContractAddress {
 }
 
 export interface Tokens {
-  [tokenSymbol: string]: TokenItem
+  [tokenSymbol: string]: TokenItem;
 }
 export interface TokenItem {
   address: string;
@@ -355,7 +453,10 @@ export interface BatchFee {
   totalFee: BigNumber;
 }
 
-export declare function getDefaultProvider(network: "localhost" | "rinkeby" | "ropsten" | "mainnet", transport?: "WS" | "HTTP"): Promise<Provider>;
+export declare function getDefaultProvider(
+  network: "localhost" | "goerli" | "mainnet",
+  transport?: "WS" | "HTTP"
+): Promise<Provider>;
 
 export declare class Provider {
   transport: AbstractJSONRPCTransport;
@@ -370,7 +471,7 @@ export declare class Provider {
     transactions: {
       tx: any;
       signature?: TxEthSignature;
-    }[],
+    }[]
   ): Promise<string[]>;
 
   getContractAddress(): Promise<ContractAddress>;
@@ -382,8 +483,18 @@ export declare class Provider {
   getEthTxForWithdrawal(withdrawal_hash: any): Promise<string>;
   notifyPriorityOp(serialId: number, action: "COMMIT" | "VERIFY"): Promise<PriorityOperationReceipt>;
   notifyTransaction(hash: string, action: "COMMIT" | "VERIFY"): Promise<TransactionReceipt>;
-  getTransactionFee(txType: "Withdraw" | "Transfer" | "FastWithdraw" | ChangePubKeyFee, address: Address, tokenLike: TokenLike): Promise<Fee>;
-  getTransactionsBatchFee(txTypes: ("Withdraw" | "Transfer" | "FastWithdraw")[], addresses: Address[], tokenLike: TokenLike): Promise<BigNumber>;
+  getTransactionFee(
+    txType: "Withdraw" | "Transfer" | "FastWithdraw" | ChangePubKeyFee,
+    address: Address,
+    tokenLike: TokenLike
+  ): Promise<Fee>;
+
+  getTransactionsBatchFee(
+    txTypes: ("Withdraw" | "Transfer" | "FastWithdraw")[],
+    addresses: Address[],
+    tokenLike: TokenLike
+  ): Promise<BigNumber>;
+
   getTokenPrice(tokenLike: TokenLike): Promise<number>;
   disconnect(): Promise<any>;
 }

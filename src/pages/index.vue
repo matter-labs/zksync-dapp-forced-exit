@@ -21,7 +21,7 @@
         <template slot="header">Manual payment warning</template>
         <div>
           You will be provided with an address and fee amount. You will have to send <b>exactly given amount to the provided address within the provided timeframe</b> in order for the withdraw to be initiated.
-          <i-checkbox class="_margin-top-1" v-model="manualWarningCheckmark">I do understand that in case of any mistake in address, amount or timeframes the withdrawal may not be initiated.</i-checkbox>
+          <i-checkbox v-model="manualWarningCheckmark" class="_margin-top-1">I do understand that in case of any mistake in address, amount or timeframes the withdrawal may not be initiated.</i-checkbox>
           <i-button block variant="secondary" :disabled="!manualWarningCheckmark" class="_margin-top-1" @click="manualWarningModal=false;withdrawManually()">Continue</i-button>
           <i-button block link variant="secondary" class="_margin-top-05" @click="manualWarningModal=false">Cancel</i-button>
         </div>
@@ -135,7 +135,8 @@
             <i-button block size="lg" variant="secondary" class="_margin-top-2" @click="finish()">Ok</i-button>
           </div>
           <loading-block v-else-if="step===3">
-            <a v-if="transactionInfo.hash && currentRequest" class="_display-block _text-center" target="_blank"
+            <a
+v-if="transactionInfo.hash && currentRequest" class="_display-block _text-center" target="_blank"
               :href="transactionInfo.explorerLink">
               Link to the transaction <i class="fas fa-external-link"/>
             </a>
@@ -225,7 +226,7 @@
                 <div class="_margin-top-1 ">Account:</div> 
                 <div class="bold">{{item.target}}</div>
                 <div class="_margin-top-1 ">Tokens:</div>
-                <div :class="{'_margin-top-1': index!=0} " v-for="(balance, index) in item.balances" :key="index" >
+                <div v-for="(balance, index) in item.balances" :key="index" :class="{'_margin-top-1': index!=0} " >
                   All of <b>{{balance.symbol}}</b>
                     <span v-if="!item.fulfilledBy && !hasExpired(item)">
                       <br>
@@ -255,11 +256,11 @@ import Vue from "vue";
 import moment from "moment";
 import { BigNumber, BigNumberish } from "ethers";
 import { types as SyncTypes, Provider, getDefaultProvider } from "zksync";
+import { Network } from "zksync/build/types";
 import { Address, Balance } from "@/plugins/types";
 import { ETHER_NETWORK_NAME, APP_ETH_BLOCK_EXPLORER, APP_ZK_SCAN, APP_ZKSYNC_API_LINK } from "@/plugins/build";
 
 import utils from "@/plugins/utils";
-import supportBlock from "@/blocks/SupportBlock.vue";
 import addressInput from "@/components/AddressInput.vue";
 import dropdown from "@/components/DropdownBlock.vue";
 import timeTicker from "@/components/TimeTicker.vue";
@@ -268,7 +269,6 @@ import successBlock from "@/components/SuccessBlock.vue";
 import headerComponent from "@/blocks/Header.vue";
 import footerComponent from "@/blocks/Footer.vue";
 import { walletData } from "~/plugins/walletData";
-import { Network } from "zksync/build/types";
 
 const FORCED_EXIT_API = `${APP_ZKSYNC_API_LINK}/api/forced_exit_requests/v0.1`;
 
@@ -413,13 +413,19 @@ export default Vue.extend({
     addressInput,
     dropdown,
     timeTicker,
-    supportBlock,
     headerComponent,
     footerComponent,
     loadingBlock,
     successBlock,
   },
   layout: "index",
+  asyncData({route}) {
+    if(route.query.address) {
+      return {
+        address: route.query.address
+      }
+    }
+  },
   data() {
     return {
       step: 0,
@@ -468,13 +474,6 @@ export default Vue.extend({
         },
       },
     };
-  },
-  asyncData({route}) {
-    if(route.query.address) {
-      return {
-        address: route.query.address
-      }
-    }
   },
   computed: {
     loggedIn(): boolean {
@@ -962,7 +961,7 @@ export default Vue.extend({
         const value = BigNumber.from(amount);
         const tx = await ethWallet.sendTransaction({
           to: this.featureStatus?.forcedExitContractAddress,
-          value: value,
+          value,
           gasLimit: BigNumber.from('35000')
         });
         this.currentRequest = withdrawResponse;
@@ -973,7 +972,8 @@ export default Vue.extend({
 
         this.tip = "Waiting for the transaction to be mined...";
         const receipt = await tx.wait();
-        this.transactionInfo.fee.token.tokenPrice = this.tokenPricesMap['ETH'];
+        console.log("receipt", receipt);
+        this.transactionInfo.fee.token.tokenPrice = this.tokenPricesMap.ETH;
         this.transactionInfo.fee.amount = '0';
 
         this.tip = "Processing...";
