@@ -7,7 +7,7 @@ name: "Deploy preview"
         type: string
         default: "goerli"
         required: false
-        description: "target/env: mainnet, goerli, sepolia"
+        description: "target/env: mainnet, goerli"
 jobs:
   build_and_preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} or ${{ github.event.repository.full_name == github.repository }}

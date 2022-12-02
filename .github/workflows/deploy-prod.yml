@@ -53,13 +53,3 @@ jobs:
           target: goerli
           projectId: forced-exit
           channelID: live
-
-      - name: "Deploy target: prod-sepolia"
-        run: yarn run ci:build:sepolia
-      - uses: matter-labs/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT }}"
-          target: sepolia
-          projectId: forced-exit
-          channelID: live
