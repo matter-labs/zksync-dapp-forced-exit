@@ -6,7 +6,7 @@
         <template slot="header">How does this all work?</template>
         <div>
         <div>
-          <b>zkSync alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
+          <b>zkSync Lite alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
           so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
           <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
             <ul>
