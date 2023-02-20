@@ -6,11 +6,11 @@
         <template slot="header">How does this all work?</template>
         <div>
         <div>
-          <b>zkSync Lite alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync supports most of web3-compatible wallets,
+          <b>zkSync Lite alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync Lite supports most of web3-compatible wallets,
           so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
           <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
             <ul>
-              <li>It must exist (hold any funds) in the zkSync network for at least 24 hours.</li>
+              <li>It must exist (hold any funds) in the zkSync Lite network for at least 24 hours.</li>
               <li>The account must be locked (no ChangePubKey operation so far).</li>
             </ul>
           </div>
@@ -42,14 +42,14 @@
           <div v-if="step===0" class="_margin-top-2">
             <address-input v-model="address" @change="setSubError"/>
             <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
-              The provided account has done transactions on zkSync before.
+              The provided account has done transactions on zkSync Lite before.
               <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet <i class="fas fa-external-link"></i></a> to withdraw the funds.
             </div>
             <div v-if="subErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
-              The account does not exist on zkSync network.
+              The account does not exist on zkSync Lite network.
             </div>
             <div v-if="subErrorType==='TooYoung'" class="errorText _text-center _margin-top-1 secondaryText">
-              To initiate an alternative withdrawal an account should exist in zkSync network for at least 24 hours.
+              To initiate an alternative withdrawal an account should exist in zkSync Lite network for at least 24 hours.
             </div>
             <div v-if="subErrorType==='Other'" class="errorText _text-center _margin-top-1 secondaryText">
               {{subError}}
@@ -1102,12 +1102,12 @@ export default Vue.extend({
 
     setNonceModal() {
       this.subErrorType = "Active";
-      this.subError = "The account that had any activity on zkSync can only use the wallet to withdraw";
+      this.subError = "The account that had any activity on zkSync Lite can only use the wallet to withdraw";
     },
 
     setAccountDoesNotExistModal() {
       this.subErrorType = "NotExists";
-      this.subError = "The account does not exist in the zkSync network";
+      this.subError = "The account does not exist in the zkSync Lite network";
     },
 
     removeError() {

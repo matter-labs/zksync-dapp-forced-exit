@@ -5,15 +5,14 @@ import { isProduction, nuxtBuildConfig } from "./src/plugins/build";
 
 const srcDir = "./src/";
 
-const pageTitle = "zkSync Alternative Withdrawal from L2 back to mainnet";
+const pageTitle = "zkSync Lite Alternative Withdrawal from L2 back to mainnet";
 const pageTitleTemplate = pageTitle;
 const pageDescription = "Easily move your funds to L1 without interaction with L2.";
 const pageImg = "/cover.jpg";
 const pageKeywords = [
-  "zksync withdrawal",
+  "zksync lite withdrawal",
   "alternative withdrawal",
   "bulk withdrawal",
-  "zkSync",
   "Matter Labs",
   "rollup",
   "ZK rollup",
