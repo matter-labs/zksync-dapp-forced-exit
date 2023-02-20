@@ -2,7 +2,7 @@
   width: 100%;
   height: max-content;
   display: grid;
-  grid-template-columns: 0px 1fr;
+  grid-template-columns: max-content 1fr;
   grid-template-rows: 100%;
   grid-gap: 10px;
   align-items: center;
@@ -37,12 +37,16 @@
     outline: none;
     transition: $transition1 color;
     font-size: 17px;
-
+    
     &::placeholder {
-      font-size: 18px;
+      font-size: 16px;
+      @media screen and (max-width: 450px) {
+        font-size: 12px;
+      }
     }
   }
   .userImgPlaceholder {
+    z-index: 1;
     transition: $transition1 background-color;
   }
 }
