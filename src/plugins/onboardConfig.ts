@@ -2,7 +2,7 @@ import Web3 from "web3";
 import web3Wallet from "@/plugins/web3";
 import { ETHER_NETWORK_ID, ETHER_NETWORK_NAME } from "@/plugins/build";
 
-const APP_NAME = "zkSync Beta";
+const APP_NAME = "zkSync Lite Alternative Withdrawal";
 const FORTMATIC_KEY = process.env.APP_FORTMATIC;
 const INFURA_KEY = process.env.APP_INFURA_KEY;
 const RPC_URL = `https://${ETHER_NETWORK_NAME}.infura.io/v3/${process.env.APP_WS_API_ETHERSCAN_TOKEN}`;
