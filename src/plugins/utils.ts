@@ -1,7 +1,7 @@
-import { walletData } from "@/plugins/walletData";
-import { Address, DecimalBalance, GweiBalance, TokenSymbol } from "@/plugins/types";
 import { utils as zkUtils } from "zksync";
 import { BigNumberish, utils } from "ethers";
+import { walletData } from "@/plugins/walletData";
+import { Address, DecimalBalance, GweiBalance, TokenSymbol } from "@/plugins/types";
 
 /**
  *
@@ -82,5 +82,29 @@ export default {
 
   validateAddress: (address: Address): boolean => {
     return utils.isAddress(address);
+  },
+
+  screenAddress: async (address: string) => {
+    if (!process.env.APP_SCREENING_API_URL) {
+      return;
+    }
+
+    const url = new URL(process.env.APP_SCREENING_API_URL);
+    url.searchParams.append("address", address);
+
+    let response;
+    try {
+      const fetchResponse = await fetch(url.toString());
+      if (!fetchResponse.ok) {
+        throw new Error("Network response was not ok.");
+      }
+      response = await fetchResponse.json();
+    } catch (error) {
+      response = { result: true }; // Fallback response in case of error
+    }
+
+    if (!response.result) {
+      throw new Error("We were unable to process this transaction...");
+    }
   },
 };

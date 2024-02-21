@@ -6,9 +6,12 @@ import Onboard from "bnc-onboard";
 import onboardConfig from "@/plugins/onboardConfig";
 import web3Wallet from "@/plugins/web3";
 import watcher from "@/plugins/watcher";
+import utils from "@/plugins/utils";
 
 import { walletData } from "@/plugins/walletData";
-import { RootState } from "~/store";
+import { RootState } from "@/store";
+
+let accountScreeningPromise: Promise<void> | undefined;
 
 export const state = () => ({
   onboard: false as any,
@@ -56,7 +59,7 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
 
   async walletRefresh({ getters, dispatch }, firstSelect = true): Promise<boolean> {
     try {
-      const onboard = getters["getOnboard"];
+      const onboard = getters.getOnboard;
       this.commit("account/setLoadingHint", "followInstructions");
       let walletCheck = false;
       if (firstSelect) {
@@ -93,7 +96,7 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
        */
       const ethWallet = new ethers.providers.Web3Provider(currentProvider).getSigner();
 
-      await dispatch('restoreProviderConnection');
+      await dispatch("restoreProviderConnection");
       const zksync = await walletData.zkSync();
       const syncProvider = walletData.get().syncProvider;
       const syncWallet = await zksync.Wallet.fromEthSignerNoKeys(ethWallet, syncProvider);
@@ -107,6 +110,7 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
 
       this.commit("account/setAddress", syncWallet.address());
       this.commit("account/setLoggedIn", true);
+      dispatch("screenAccountAddress");
       return true;
     } catch (error) {
       if (!error.message.includes("User denied")) {
@@ -116,6 +120,13 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
       return false;
     }
   },
+  async screenAccountAddress({ rootGetters }) {
+    if (!accountScreeningPromise) {
+      accountScreeningPromise = utils.screenAddress(rootGetters["account/address"]);
+    }
+
+    return await accountScreeningPromise;
+  },
   logout({ commit, getters }): void {
     const onboard = getters.getOnboard;
     onboard.walletReset();
@@ -123,5 +134,6 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
     localStorage.removeItem("selectedWallet");
     this.commit("account/setLoggedIn", false);
     this.commit("account/setSelectedWallet", "");
+    accountScreeningPromise = undefined;
   },
 };

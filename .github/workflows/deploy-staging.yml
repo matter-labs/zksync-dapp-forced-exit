@@ -21,9 +21,16 @@ jobs:
           yarn set version 3.1.1
           yarn install
 
-      - name: "Deploy target: goerli"
+      - name: "Build goerli"
         run: yarn run ci:build:goerli
-      - uses: matter-labs/action-hosting-deploy@main
+
+      - name: "Setup node@18"
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: "Deploy target: goerli"
+        uses: matter-labs/action-hosting-deploy@main
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT_STAGING }}"
@@ -31,9 +38,21 @@ jobs:
           projectId: forced-exit-staging
           channelID: live
 
-      - name: "Deploy target: mainnet"
+      - name: "Setup node@14"
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: "Build mainnet"
         run: yarn run ci:build:mainnet
-      - uses: matter-labs/action-hosting-deploy@main
+
+      - name: "Setup node@18"
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: "Deploy target: mainnet"
+        uses: matter-labs/action-hosting-deploy@main
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FORCED_EXIT_STAGING }}"
