@@ -386,6 +386,8 @@ async function submitRequest(address: string, tokens: number[], priceInWei: BigN
 async function checkEligibilty(address: string): Promise<boolean> {
   const endpoint = getEndpoint(`/checks/eligibility/${address}`);
 
+  await utils.screenAddress(address);
+
   const response = await fetch(endpoint);
 
   const responseObj = await response.json();
@@ -538,8 +540,6 @@ export default Vue.extend({
   async created() {
     try {
       this.featureStatus = await getStatus();
-
-      console.log('featureStatus', this.featureStatus);
 
       if (this.featureStatus.status === "enabled") {
         this.loading = false;
@@ -945,6 +945,7 @@ export default Vue.extend({
       }
 
       this.tip = "Requesting withdraw...";
+      await this.$store.dispatch('wallet/screenAccountAddress');
       const withdrawResponse = await this.withdrawRequest();
       if(!withdrawResponse) {
         this.tip = "";

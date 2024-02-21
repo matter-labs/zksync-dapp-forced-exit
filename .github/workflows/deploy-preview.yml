@@ -31,9 +31,16 @@ jobs:
           yarn install
           npm install -g firebase-tools
 
-      - name: "Deploy dist to ${{ github.event.inputs.network || 'goerli' }}"
+      - name: "Build dist of ${{ github.event.inputs.network || 'goerli' }}"
         run: "yarn run ci:build:${{ github.event.inputs.network || 'goerli' }}"
-      - uses: matter-labs/action-hosting-deploy@main
+        
+      - name: "Setup node@18"
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: "Deploy"
+        uses: matter-labs/action-hosting-deploy@main
         id: deploy_preview
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
