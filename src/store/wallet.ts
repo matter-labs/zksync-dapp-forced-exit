@@ -122,10 +122,7 @@ export const actions: ActionTree<WalletModuleState, RootState> = {
   },
   async screenAccountAddress({ rootGetters }) {
     if (!accountScreeningPromise) {
-      const screeningApiUrl = rootGetters["zk-onboard/options"].screeningApiUrl;
-      if (screeningApiUrl) {
-        accountScreeningPromise = utils.screenAddress(rootGetters["account/address"]);
-      }
+      accountScreeningPromise = utils.screenAddress(rootGetters["account/address"]);
     }
 
     return await accountScreeningPromise;
