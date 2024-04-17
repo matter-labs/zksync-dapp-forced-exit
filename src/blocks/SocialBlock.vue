@@ -24,24 +24,9 @@ export default {
     socialNetworks() {
       const socialIcons = [
         {
-          name: "Medium Blog",
-          icon: ["fa-medium-m", "fab"],
-          url: "https://medium.com/matter-labs",
-        },
-        {
-          name: "Gitter Rooms",
-          icon: ["fa-gitter", "fab"],
-          url: "https://gitter.im/matter-labs/zksync",
-        },
-        {
           name: "Discord Community",
           icon: ["fa-discord", "fab"],
           url: "https://join.zksync.dev/",
-        },
-        {
-          name: "Telegram Community",
-          icon: ["fa-telegram-plane", "fab"],
-          url: "https://t.me/zksync",
         },
         {
           name: "Twitter Community",
