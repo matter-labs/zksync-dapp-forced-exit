@@ -13,7 +13,6 @@ const pageKeywords = [
   "zksync lite withdrawal",
   "alternative withdrawal",
   "bulk withdrawal",
-  "Matter Labs",
   "rollup",
   "ZK rollup",
   "zero confirmation",
