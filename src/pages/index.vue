@@ -7,7 +7,7 @@
         <div>
         <div>
           <b>zkSync Lite alternative withdrawal</b> is way to get funds to Layer 1 without interacting directly with the protocol. zkSync Lite supports most of web3-compatible wallets,
-          so we highly recommend you to use the <a href="http://wallet.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
+          so we highly recommend you to use the <a href="http://lite.zksync.io/" target="_blank" >official client <i class="fas fa-external-link"></i></a> to withdraw funds if that is possible as it is cheaper and more convenient.</div>
           <div class="_margin-top-1">In order for the account to be eligible for an alternative withdrawal all of the following must be true:
             <ul>
               <li>It must exist (hold any funds) in the zkSync Lite network for at least 24 hours.</li>
@@ -43,7 +43,7 @@
             <address-input v-model="address" @change="setSubError"/>
             <div v-if="subErrorType==='Active'" class="errorText _text-center _margin-top-1 secondaryText">
               The provided account has done transactions on zkSync Lite before.
-              <br/>Please go to the <a target="_blank" href="http://wallet.zksync.io/" class="linkText">official wallet <i class="fas fa-external-link"></i></a> to withdraw the funds.
+              <br/>Please go to the <a target="_blank" href="http://lite.zksync.io/" class="linkText">official wallet <i class="fas fa-external-link"></i></a> to withdraw the funds.
             </div>
             <div v-if="subErrorType==='NotExists'" class="errorText _text-center _margin-top-1 secondaryText">
               The account does not exist on zkSync Lite network.
